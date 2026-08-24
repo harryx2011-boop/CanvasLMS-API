@@ -1,6 +1,6 @@
 # CanvasLMS - API: context
 
-> v1.0.0 (2026-08-24) initial release
+> v1.0.0 (2026-08-24) initial release; marketing site added under web/ the same day
 
 ## Purpose
 
@@ -92,3 +92,13 @@ HTTP transport default port: **7100** (host `127.0.0.1` by default). Stdio trans
 - No arbitrary code execution (no TypeScript/JS sandbox): every tool is a fixed Canvas API operation.
 - No institutional hosting or SSO/OAuth flow: the server is local-only and authenticates with a single personal access token per run.
 - Permissions are exactly whatever the configured token's Canvas role grants. A student token cannot exercise educator tools (grading, bulk messaging, content migration, etc.); those calls return the Canvas 403 with a permission hint rather than succeeding partially.
+
+## Marketing site (`web/`)
+
+Next.js 16 App Router, React 19, Tailwind v4, @next/mdx, lucide-react, @vercel/analytics. Brand name on the site is "Canvas Connect"; package and repo stay CanvasLMS-API. Deployed on Vercel with Root Directory `web`, project `canvas-connect` (https://canvas-connect.vercel.app). Dev port 4200 (`npm run dev`).
+
+Routes: `/` (hero, terminal demo, how it works, six features, examples, educators, closing CTA), `/docs` (install with OS tabs, connect with client tabs for Claude Code / Claude Desktop / Cursor / Windsurf / Codex / HTTP+Docker, configuration, usage, troubleshooting), `/tools` (searchable explorer over `src/content/tools.json`, URL-synced filters, `#tool_name` deep links), `/skills` (eight skill cards from `src/content/skills.ts`), `/changelog` (renders `src/content/CHANGELOG.md`).
+
+Design system lives in `src/app/globals.css` (CSS variables mapped through `@theme inline`): light-first with a `.dark` class toggle persisted in localStorage, warm orange accent (`#c2410c` light / `#fb923c` dark), Geist Sans + Mono, two radii (`rounded-control` 8px, `rounded-card` 16px) plus `rounded-full` for pills, hover lift 2px max, reduced-motion respected. Shared components in `src/components/`: Nav, Footer, ThemeToggle, Container, Section, CodeBlock, CopyButton, Tabs (storageKey + hashSync), Reveal, ButtonLink, GithubIcon (lucide has no brand icons), mdx map.
+
+Generated data: `src/content/tools.json` is dumped from the server's `list_tools()` (names, groups by module, annotations, params); `src/content/CHANGELOG.md` is a copy of the root changelog. Refresh both when tools or releases change. Logo/favicon: `src/app/icon.svg` and `public/logo.svg` (user-supplied mark).
