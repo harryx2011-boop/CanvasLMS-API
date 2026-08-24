@@ -4,6 +4,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   pageExtensions: ["ts", "tsx", "md", "mdx"],
   reactStrictMode: true,
+  agentRules: false,
 };
 
 const withMDX = createMDX({ extension: /.(md|mdx)$/ });
