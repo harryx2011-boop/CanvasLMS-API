@@ -95,9 +95,9 @@ HTTP transport default port: **7100** (host `127.0.0.1` by default). Stdio trans
 
 ## Marketing site (`web/`)
 
-Next.js 16 App Router, React 19, Tailwind v4, @next/mdx, lucide-react, @vercel/analytics. Brand name on the site is "Canvas Connect"; package and repo stay CanvasLMS-API. Deployed on Vercel with Root Directory `web`, project `canvas-connect` (https://canvas-connect.vercel.app). Dev port 4200 (`npm run dev`).
+Next.js 16 App Router, React 19, Tailwind v4, @next/mdx, lucide-react, @vercel/analytics. Brand name on the site is "Canvas Connect"; package and repo stay CanvasLMS-API. Deployed on Vercel with Root Directory `web`, project `canvas-api`, live at https://canvaslms-api.vercel.app. Dev port 4300 (`npm run dev`); 4200 belongs to Noted.
 
-Routes: `/` (hero, terminal demo, how it works, six features, examples, educators, closing CTA), `/docs` (install with OS tabs, connect with client tabs for Claude Code / Claude Desktop / Cursor / Windsurf / Codex / HTTP+Docker, configuration, usage, troubleshooting), `/tools` (searchable explorer over `src/content/tools.json`, URL-synced filters, `#tool_name` deep links), `/skills` (eight skill cards from `src/content/skills.ts`), `/changelog` (renders `src/content/CHANGELOG.md`).
+Routes: `/` (hero, terminal demo, install with OS tabs + client tabs, usage, closing CTA), `/docs` (install with OS tabs, connect with client tabs for Claude Code / Claude Desktop / Cursor / Windsurf / Codex / HTTP+Docker), `/tools` (searchable explorer over `src/content/tools.json`, URL-synced filters, `#tool_name` deep links), `/skills` (eight skill cards from `src/content/skills.ts`), `/changelog` (renders `src/content/CHANGELOG.md`).
 
 Design system lives in `src/app/globals.css` (CSS variables mapped through `@theme inline`): light-first with a `.dark` class toggle persisted in localStorage, warm orange accent (`#c2410c` light / `#fb923c` dark), Geist Sans + Mono, two radii (`rounded-control` 8px, `rounded-card` 16px) plus `rounded-full` for pills, hover lift 2px max, reduced-motion respected. Shared components in `src/components/`: Nav, Footer, ThemeToggle, Container, Section, CodeBlock, CopyButton, Tabs (storageKey + hashSync), Reveal, ButtonLink, GithubIcon (lucide has no brand icons), mdx map.
 
