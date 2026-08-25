@@ -4,7 +4,7 @@ export const site = {
   tagline: "Ask your AI what's due. It actually knows.",
   description:
     "Canvas Connect is a local MCP server that puts your Canvas LMS account in front of Claude, Cursor, and other AI assistants. 100 tools, preview-then-confirm writes, your own token.",
-  url: "https://canvas-mcp.vercel.app",
+  url: "https://canvaslms-api.vercel.app",
   repo: "https://github.com/harryx2011-boop/CanvasLMS-API",
   email: "harryx2011@gmail.com",
   toolCount: 100,

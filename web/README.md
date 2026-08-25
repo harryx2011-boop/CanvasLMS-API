@@ -9,7 +9,7 @@ npm install
 npm run dev
 ```
 
-Runs on port 4200.
+Runs on port 4300.
 
 ## Build
 

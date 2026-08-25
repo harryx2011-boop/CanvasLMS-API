@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
 import { ClosingCta } from "@/components/home/closing-cta";
-import { Educators } from "@/components/home/educators";
-import { Examples } from "@/components/home/examples";
-import { Features } from "@/components/home/features";
 import { Hero } from "@/components/home/hero";
-import { HowItWorks } from "@/components/home/how-it-works";
+import { Install } from "@/components/home/install";
+import { Usage } from "@/components/home/usage";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -16,10 +14,8 @@ export default function HomePage() {
   return (
     <>
       <Hero />
-      <HowItWorks />
-      <Features />
-      <Examples />
-      <Educators />
+      <Install />
+      <Usage />
       <ClosingCta />
     </>
   );
