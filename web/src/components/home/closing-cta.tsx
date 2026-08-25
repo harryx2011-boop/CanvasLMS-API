@@ -21,8 +21,8 @@ export function ClosingCta() {
                 <GithubIcon className="size-4" />
                 View on GitHub
               </ButtonLink>
-              <ButtonLink href="/docs" variant="secondary">
-                Read the docs
+              <ButtonLink href="#install" variant="secondary">
+                Install it
               </ButtonLink>
             </div>
           </div>

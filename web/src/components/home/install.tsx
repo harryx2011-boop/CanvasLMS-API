@@ -1,7 +1,4 @@
-import { ArrowRight } from "lucide-react";
-import Link from "next/link";
-import { OsTabs } from "@/components/docs/os-tabs";
-import { ClientTabs } from "@/components/docs/client-tabs";
+import { ClientTabs, OsTabs } from "@/components/install/tabs";
 import { Reveal } from "@/components/reveal";
 import { Section } from "@/components/section";
 import { clientTabs, osPanels } from "@/components/install/panels";
@@ -31,16 +28,6 @@ export function Install() {
             <ClientTabs tabs={clientTabs} />
           </div>
         </div>
-      </Reveal>
-
-      <Reveal delay={120}>
-        <Link
-          href="/docs"
-          className="mt-8 inline-flex items-center gap-1.5 text-sm font-medium text-accent transition-colors hover:text-accent-hover"
-        >
-          Full documentation and troubleshooting
-          <ArrowRight className="size-4" />
-        </Link>
       </Reveal>
     </Section>
   );

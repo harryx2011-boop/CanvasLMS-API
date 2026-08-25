@@ -1,5 +1,5 @@
 import { CodeBlock } from "@/components/code-block";
-import type { ClientTabDef } from "@/components/docs/client-tabs";
+import type { ClientTabDef } from "@/components/install/tabs";
 import type { OS } from "@/lib/site";
 
 const REPO = "https://github.com/harryx2011-boop/CanvasLMS-API.git";
