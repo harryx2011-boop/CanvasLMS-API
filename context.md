@@ -95,7 +95,7 @@ HTTP transport default port: **7100** (host `127.0.0.1` by default). Stdio trans
 
 ## Marketing site (`web/`)
 
-Next.js 16 App Router, React 19, Tailwind v4, @next/mdx, lucide-react, @vercel/analytics. Brand name on the site is "Canvas Connect"; package and repo stay CanvasLMS-API. Deployed on Vercel with Root Directory `web`, project `canvas-api`, live at https://canvaslms-api.vercel.app. Dev port 4300 (`npm run dev`); 4200 belongs to Noted.
+Next.js 16 App Router, React 19, Tailwind v4, @next/mdx, lucide-react, @vercel/analytics. Visual system follows the Linear recipe: dark-default (near-black #08090A ground) with a light companion, two-tier tokens (primitives then semantic roles) in globals.css, hairline rgba borders, radii 6/12/16, quint easing at 150ms, and the project's orange as the single accent. lucide icons throughout. Brand name on the site is "Canvas Connect"; package and repo stay CanvasLMS-API. Deployed on Vercel with Root Directory `web`, project `canvas-api`, live at https://canvaslms-api.vercel.app. Dev port 4300 (`npm run dev`); 4200 belongs to Noted.
 
 Routes: `/` (hero, terminal demo, install with OS tabs + client tabs for Claude Code / Claude Desktop / Cursor / Windsurf / Codex / HTTP+Docker, usage, closing CTA; there is no `/docs` route, it was folded in), `/tools` (searchable explorer over `src/content/tools.json`, URL-synced filters, `#tool_name` deep links), `/skills` (eight skill cards from `src/content/skills.ts`), `/changelog` (renders `src/content/CHANGELOG.md`).
 
