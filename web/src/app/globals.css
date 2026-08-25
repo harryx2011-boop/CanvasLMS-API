@@ -2,46 +2,87 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Primitives. Never referenced by a component; semantic tokens point at these. */
 :root {
-  --background: #fafaf9;
-  --foreground: #1c1917;
-  --muted: #57534e;
-  --subtle: #f5f5f4;
-  --border: #e7e5e4;
-  --card: #ffffff;
-  --accent: #c2410c;
-  --accent-hover: #9a3412;
+  --ink-0: #fcfcfd;
+  --ink-1: #ffffff;
+  --ink-2: #f4f4f6;
+  --ink-3: #ebebef;
+  --ink-11: #696a71;
+  --ink-12: #55565c;
+  --ink-13: #0b0c0e;
+
+  --night-0: #08090a;
+  --night-1: #16171c;
+  --night-2: #1e1f25;
+  --night-3: #26272e;
+  --night-11: #868c99;
+  --night-12: #9ca3af;
+  --night-13: #f7f8f8;
+
+  --ember-light: #c2410c;
+  --ember-light-hover: #9a3412;
+  --ember-light-soft: #fff1e7;
+  --ember-dark: #fb923c;
+  --ember-dark-hover: #fdba74;
+  --ember-dark-soft: #2a1509;
+}
+
+/* Semantic tier. The only tier components reference. */
+:root {
+  --background: var(--ink-0);
+  --foreground: var(--ink-13);
+  --secondary: var(--ink-12);
+  --muted: var(--ink-11);
+  --surface: var(--ink-1);
+  --surface-raised: var(--ink-2);
+  --subtle: var(--ink-2);
+  --card: var(--ink-1);
+  --border: rgb(0 0 0 / 0.09);
+  --border-strong: rgb(0 0 0 / 0.14);
+  --accent: var(--ember-light);
+  --accent-hover: var(--ember-light-hover);
   --accent-foreground: #ffffff;
-  --accent-soft: #ffedd5;
-  --code-bg: #1c1917;
-  --code-fg: #f5f5f4;
-  --code-border: #292524;
-  --ring: #c2410c;
+  --accent-soft: var(--ember-light-soft);
+  --code-bg: var(--night-0);
+  --code-fg: var(--night-13);
+  --code-border: rgb(255 255 255 / 0.08);
+  --ring: var(--ember-light);
+  --shadow-raised: 0 1px 2px rgb(0 0 0 / 0.06);
 }
 
 .dark {
-  --background: #0c0a09;
-  --foreground: #f5f5f4;
-  --muted: #a8a29e;
-  --subtle: #1c1917;
-  --border: #292524;
-  --card: #151311;
-  --accent: #fb923c;
-  --accent-hover: #fdba74;
-  --accent-foreground: #1c1917;
-  --accent-soft: #431407;
-  --code-bg: #151311;
-  --code-fg: #f5f5f4;
-  --code-border: #292524;
-  --ring: #fb923c;
+  --background: var(--night-0);
+  --foreground: var(--night-13);
+  --secondary: var(--night-12);
+  --muted: var(--night-11);
+  --surface: var(--night-1);
+  --surface-raised: var(--night-2);
+  --subtle: var(--night-1);
+  --card: var(--night-1);
+  --border: rgb(255 255 255 / 0.07);
+  --border-strong: rgb(255 255 255 / 0.12);
+  --accent: var(--ember-dark);
+  --accent-hover: var(--ember-dark-hover);
+  --accent-foreground: var(--night-0);
+  --accent-soft: var(--ember-dark-soft);
+  --code-bg: var(--night-1);
+  --code-fg: var(--night-13);
+  --code-border: rgb(255 255 255 / 0.08);
+  --ring: var(--ember-dark);
+  --shadow-raised: 0 1px 2px rgb(0 0 0 / 0.3);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-secondary: var(--secondary);
   --color-muted: var(--muted);
   --color-subtle: var(--subtle);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-card: var(--card);
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
@@ -53,14 +94,19 @@
   --color-ring: var(--ring);
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
-  --radius-control: 0.5rem;
-  --radius-card: 1rem;
-  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --radius-control: 6px;
+  --radius-card: 12px;
+  --radius-panel: 16px;
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 html {
-  color-scheme: light;
+  color-scheme: dark;
   scroll-behavior: smooth;
+}
+
+html.light {
+  color-scheme: light;
 }
 
 html,
@@ -68,15 +114,13 @@ body {
   overflow-x: clip;
 }
 
-html.dark {
-  color-scheme: dark;
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
   font-feature-settings: "cv11", "ss01";
   text-rendering: optimizeLegibility;
+  font-size: 15px;
+  line-height: 1.55;
 }
 
 ::selection {
@@ -88,14 +132,15 @@ body {
   outline: 2px solid var(--ring);
   outline-offset: 2px;
   border-radius: 4px;
+  transition: none !important;
 }
 
 .reveal {
   opacity: 0;
-  transform: translateY(12px);
+  transform: translateY(8px);
   transition:
-    opacity 500ms var(--ease-out-quart),
-    transform 500ms var(--ease-out-quart);
+    opacity 420ms var(--ease-out-quint),
+    transform 420ms var(--ease-out-quint);
   transition-delay: var(--reveal-delay, 0ms);
 }
 

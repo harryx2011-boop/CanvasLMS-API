@@ -31,24 +31,24 @@ function SkillCard({ skill, delay }: { skill: Skill; delay: number }) {
   const Icon = iconMap[skill.icon];
   return (
     <Reveal delay={delay}>
-      <div className="rounded-card border border-border bg-card p-6 transition-transform duration-200 ease-out hover:-translate-y-0.5">
+      <div className="rounded-card border border-border bg-surface p-6 transition-[border-color,background-color] duration-150 ease-out hover:border-border-strong">
         <div className="flex items-start justify-between gap-3">
           <div className="flex size-10 items-center justify-center rounded-control bg-accent-soft text-accent">
             <Icon className="size-5" />
           </div>
-          <span className="rounded-full border border-border px-2.5 py-1 text-sm capitalize text-muted">
+          <span className="rounded-full border border-border px-2.5 py-1 text-xs capitalize text-secondary">
             {skill.audience}
           </span>
         </div>
 
         <h3 className="mt-4 font-mono text-base font-semibold leading-tight tracking-tight">{skill.name}</h3>
-        <p className="mt-2 text-sm leading-relaxed text-muted">{skill.summary}</p>
+        <p className="mt-2 text-sm leading-relaxed text-secondary">{skill.summary}</p>
 
         <div className="mt-4">
           <p className="text-sm font-medium text-foreground">Say:</p>
           <div className="mt-2 flex flex-wrap gap-2">
             {skill.triggers.map((trigger) => (
-              <span key={trigger} className="rounded-full bg-subtle px-3 py-1 text-sm text-muted">
+              <span key={trigger} className="rounded-full bg-surface-raised px-2.5 py-1 text-xs text-secondary">
                 &ldquo;{trigger}&rdquo;
               </span>
             ))}
@@ -87,8 +87,8 @@ export default function SkillsPage() {
   return (
     <Container className="py-16 sm:py-24">
       <div className="max-w-2xl">
-        <h1 className="text-4xl font-semibold leading-tight tracking-tight">Agent skills</h1>
-        <p className="mt-4 text-lg leading-relaxed text-muted">
+        <h1 className="text-3xl font-semibold leading-[1.1] tracking-[-0.03em] sm:text-4xl">Agent skills</h1>
+        <p className="mt-4 text-pretty leading-relaxed text-secondary">
           Eight ready-made workflows that chain the tools for common tasks. Drop a folder into your skills directory
           and trigger it by phrase.
         </p>

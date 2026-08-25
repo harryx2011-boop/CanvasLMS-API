@@ -8,39 +8,42 @@ import { TerminalDemo } from "./terminal-demo";
 
 export function Hero() {
   return (
-    <section className="py-20 sm:py-28 lg:py-32">
-      <Container>
-        <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-14">
+    <section className="relative overflow-hidden border-b border-border py-20 sm:py-24">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 -top-40 h-80 bg-[radial-gradient(60%_100%_at_50%_100%,var(--accent)_0%,transparent_70%)] opacity-[0.07]"
+      />
+      <Container className="relative">
+        <div className="grid grid-cols-[minmax(0,1fr)] items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:gap-16">
           <div>
             <Reveal>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-soft px-3 py-1 text-sm font-medium text-accent">
-                <Plug className="size-4" strokeWidth={1.5} />
-                MCP server for Canvas LMS · v{site.version}
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-2.5 py-1 text-xs font-medium text-secondary">
+                <Plug className="size-3.5 text-accent" strokeWidth={2} aria-hidden="true" />
+                MCP server for Canvas LMS
+                <span className="text-muted">v{site.version}</span>
               </span>
             </Reveal>
             <Reveal delay={100}>
-              <h1 className="mt-5 text-balance text-4xl font-semibold leading-[1.1] tracking-tight sm:text-5xl">
+              <h1 className="mt-6 text-balance text-4xl font-semibold leading-[1.08] tracking-[-0.03em] sm:text-5xl">
                 Ask your AI what&apos;s due. It actually knows.
               </h1>
             </Reveal>
             <Reveal delay={200}>
-              <p className="mt-5 max-w-lg text-pretty text-lg leading-relaxed text-muted">
-                A local MCP server that hands Claude, Cursor, and other assistants your real Canvas account &mdash;
-                {" "}{site.toolCount} tools, your own token, nothing leaves your machine.
+              <p className="mt-5 max-w-lg text-pretty leading-relaxed text-secondary">
+                A local MCP server that hands Claude, Cursor, and other assistants your real Canvas account.{" "}
+                {site.toolCount} tools, your own token, nothing leaves your machine.
               </p>
             </Reveal>
             <Reveal delay={300}>
-              <div className="mt-8">
-                <div className="flex flex-wrap items-center gap-3">
-                  <ButtonLink href="#install" variant="primary">
-                    Install it
-                  </ButtonLink>
-                  <ButtonLink href={site.repo} external variant="secondary">
-                    <GithubIcon className="size-4" />
-                    View on GitHub
-                    <ArrowUpRight className="size-4" strokeWidth={1.5} />
-                  </ButtonLink>
-                </div>
+              <div className="mt-8 flex flex-wrap items-center gap-2.5">
+                <ButtonLink href="#install" variant="primary">
+                  Install it
+                </ButtonLink>
+                <ButtonLink href={site.repo} external variant="secondary">
+                  <GithubIcon className="size-4" />
+                  View on GitHub
+                  <ArrowUpRight className="size-3.5 text-muted" strokeWidth={1.5} />
+                </ButtonLink>
               </div>
             </Reveal>
           </div>

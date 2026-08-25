@@ -123,18 +123,18 @@ export function ToolsExplorer({ tools }: { tools: Tool[] }) {
     <div>
       <div className="flex flex-col gap-4">
         <div>
-          <label htmlFor="tools-search" className="mb-1.5 block text-sm font-medium text-muted">
+          <label htmlFor="tools-search" className="mb-1.5 block text-xs font-medium uppercase tracking-[0.08em] text-muted">
             Search tools
           </label>
           <div className="relative max-w-sm">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" strokeWidth={1.5} />
             <input
               id="tools-search"
               type="search"
               value={inputValue}
               onChange={(event) => setInputValue(event.target.value)}
               placeholder="Search tools"
-              className="min-h-10 w-full rounded-control border border-border bg-card py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-muted focus-visible:outline-none"
+              className="min-h-9 w-full rounded-control border border-border bg-surface py-2 pl-9 pr-3 text-sm text-foreground transition-[border-color] duration-150 ease-out placeholder:text-muted hover:border-border-strong focus-visible:outline-none"
             />
           </div>
         </div>
@@ -144,8 +144,8 @@ export function ToolsExplorer({ tools }: { tools: Tool[] }) {
             type="button"
             aria-pressed={group === ""}
             onClick={() => updateParams({ group: "" })}
-            className={`min-h-10 rounded-full border px-3.5 text-sm font-medium transition-colors ${
-              group === "" ? "border-accent bg-accent-soft text-accent" : "border-border bg-card text-muted hover:text-foreground"
+            className={`min-h-8 rounded-control border px-2.5 text-[0.8125rem] font-medium transition-[color,background-color,border-color,scale] duration-150 ease-out active:scale-[0.96] ${
+              group === "" ? "border-accent/40 bg-accent-soft text-accent" : "border-border bg-surface text-secondary hover:border-border-strong hover:text-foreground"
             }`}
           >
             All ({tools.length})
@@ -156,8 +156,8 @@ export function ToolsExplorer({ tools }: { tools: Tool[] }) {
               type="button"
               aria-pressed={group === g}
               onClick={() => updateParams({ group: g })}
-              className={`min-h-10 rounded-full border px-3.5 text-sm font-medium transition-colors ${
-                group === g ? "border-accent bg-accent-soft text-accent" : "border-border bg-card text-muted hover:text-foreground"
+              className={`min-h-8 rounded-control border px-2.5 text-[0.8125rem] font-medium transition-[color,background-color,border-color,scale] duration-150 ease-out active:scale-[0.96] ${
+                group === g ? "border-accent/40 bg-accent-soft text-accent" : "border-border bg-surface text-secondary hover:border-border-strong hover:text-foreground"
               }`}
             >
               {g} ({groupCounts.get(g)})
@@ -172,10 +172,10 @@ export function ToolsExplorer({ tools }: { tools: Tool[] }) {
               type="button"
               aria-pressed={access === option.id}
               onClick={() => updateParams({ access: option.id })}
-              className={`min-h-10 rounded-control border px-4 text-sm font-medium transition-colors ${
+              className={`min-h-8 rounded-control border px-3 text-[0.8125rem] font-medium transition-[color,background-color,border-color,scale] duration-150 ease-out active:scale-[0.96] ${
                 access === option.id
                   ? "border-accent bg-accent-soft text-accent"
-                  : "border-border bg-card text-muted hover:text-foreground"
+                  : "border-border bg-surface text-secondary hover:border-border-strong hover:text-foreground"
               }`}
             >
               {option.label}
@@ -184,18 +184,18 @@ export function ToolsExplorer({ tools }: { tools: Tool[] }) {
         </div>
       </div>
 
-      <p aria-live="polite" className="mt-6 text-sm font-medium text-muted">
+      <p aria-live="polite" className="mt-6 text-sm text-muted">
         Showing {filtered.length} of {tools.length} tools
       </p>
 
       {grouped.length === 0 ? (
-        <div className="mt-6 flex flex-col items-center gap-3 rounded-card border border-border bg-card px-6 py-16 text-center">
-          <SearchX className="size-8 text-muted" />
-          <p className="text-base text-muted">No tools match your filters.</p>
+        <div className="mt-6 flex flex-col items-center gap-3 rounded-card border border-border bg-surface px-6 py-16 text-center">
+          <SearchX className="size-7 text-muted" strokeWidth={1.5} />
+          <p className="text-sm text-secondary">No tools match your filters.</p>
           <button
             type="button"
             onClick={clearFilters}
-            className="min-h-10 rounded-control bg-accent px-4 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent-hover"
+            className="min-h-9 rounded-control bg-accent px-4 text-sm font-medium text-accent-foreground transition-[background-color,scale] duration-150 ease-out hover:bg-accent-hover active:scale-[0.96]"
           >
             Clear filters
           </button>
@@ -214,30 +214,30 @@ export function ToolsExplorer({ tools }: { tools: Tool[] }) {
                         if (el) detailsRefs.current.set(tool.name, el);
                         else detailsRefs.current.delete(tool.name);
                       }}
-                      className="group scroll-mt-24 rounded-card border border-border bg-card"
+                      className="group scroll-mt-24 rounded-card border border-border bg-surface transition-[border-color] duration-150 ease-out hover:border-border-strong"
                     >
                       <summary className="flex cursor-pointer list-none items-start gap-3 px-4 py-3.5 sm:items-center">
-                        <ChevronDown className="mt-0.5 size-4 shrink-0 text-muted transition-transform group-open:rotate-180 sm:mt-0" />
+                        <ChevronDown className="mt-0.5 size-4 shrink-0 text-muted transition-transform duration-150 ease-out group-open:rotate-180 sm:mt-0" strokeWidth={1.5} />
                         <div className="flex min-w-0 flex-1 flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-3">
                           <span className="font-mono text-sm text-foreground">{tool.name}</span>
                           <div className="flex flex-wrap items-center gap-1.5">
                             {tool.readOnly ? (
-                              <span className="rounded-full bg-subtle px-2 py-0.5 text-xs font-medium text-muted">read</span>
+                              <span className="rounded-control bg-surface-raised px-1.5 py-0.5 font-mono text-[0.6875rem] font-medium text-muted">read</span>
                             ) : (
-                              <span className="rounded-full bg-accent-soft px-2 py-0.5 text-xs font-medium text-accent">write</span>
+                              <span className="rounded-control bg-accent-soft px-1.5 py-0.5 font-mono text-[0.6875rem] font-medium text-accent">write</span>
                             )}
                             {tool.destructive ? (
-                              <span className="rounded-full border border-accent px-2 py-0.5 text-xs font-medium text-accent">
+                              <span className="rounded-control border border-accent/40 px-1.5 py-0.5 font-mono text-[0.6875rem] font-medium text-accent">
                                 destructive
                               </span>
                             ) : null}
                           </div>
-                          <span className="truncate text-sm text-muted">{firstSentence(tool.description)}</span>
+                          <span className="truncate text-sm text-secondary">{firstSentence(tool.description)}</span>
                         </div>
                       </summary>
                       <div className="border-t border-border px-4 py-4">
                         {tool.confirm ? (
-                          <p className="mb-4 text-sm text-muted">Previews first. Pass confirm=true to execute.</p>
+                          <p className="mb-4 text-sm text-secondary">Previews first. Pass confirm=true to execute.</p>
                         ) : null}
                         {tool.params.length > 0 ? (
                           <div className="overflow-x-auto">
@@ -259,10 +259,10 @@ export function ToolsExplorer({ tools }: { tools: Tool[] }) {
                                 {tool.params.map((param) => (
                                   <tr key={param.name}>
                                     <td className="border-b border-border px-3 py-2 align-top font-mono text-sm">{param.name}</td>
-                                    <td className="border-b border-border px-3 py-2 align-top text-sm text-muted">
+                                    <td className="border-b border-border px-3 py-2 align-top text-sm text-secondary">
                                       {param.required ? "required" : ""}
                                     </td>
-                                    <td className="border-b border-border px-3 py-2 align-top text-sm text-muted">
+                                    <td className="border-b border-border px-3 py-2 align-top text-sm text-secondary">
                                       {param.description}
                                     </td>
                                   </tr>
@@ -271,7 +271,7 @@ export function ToolsExplorer({ tools }: { tools: Tool[] }) {
                             </table>
                           </div>
                         ) : (
-                          <p className="text-sm text-muted">No parameters.</p>
+                          <p className="text-sm text-secondary">No parameters.</p>
                         )}
                       </div>
                     </details>

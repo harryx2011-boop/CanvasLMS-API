@@ -1,6 +1,7 @@
+import { ArrowRight, Boxes } from "lucide-react";
+import Link from "next/link";
 import { Reveal } from "@/components/reveal";
 import { Section } from "@/components/section";
-import { ButtonLink } from "@/components/button-link";
 import tools from "@/content/tools.json";
 
 type ToolRecord = { group: string; readOnly: boolean; confirm: boolean };
@@ -26,20 +27,20 @@ export function Proof() {
     <Section
       id="coverage"
       eyebrow="Coverage"
+      icon={Boxes}
       title="Every part of Canvas you actually touch"
       weight="standard"
-      className="border-t border-border"
     >
       <Reveal>
-        <dl className="grid grid-cols-2 gap-x-6 gap-y-8 border-b border-border pb-10 sm:grid-cols-4">
+        <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-card border border-border bg-border sm:grid-cols-4">
           {STATS.map((stat) => (
-            <div key={stat.label}>
+            <div key={stat.label} className="bg-surface px-5 py-6">
               <dt className="sr-only">{stat.label}</dt>
               <dd>
-                <span className="block text-4xl font-semibold tracking-tight tabular-nums sm:text-5xl">
+                <span className="block text-3xl font-semibold tracking-[-0.03em] tabular-nums sm:text-4xl">
                   {stat.figure}
                 </span>
-                <span className="mt-2 block text-sm leading-snug text-muted">{stat.label}</span>
+                <span className="mt-1.5 block text-xs leading-snug text-muted">{stat.label}</span>
               </dd>
             </div>
           ))}
@@ -47,13 +48,13 @@ export function Proof() {
       </Reveal>
 
       <Reveal delay={100}>
-        <ul className="mt-10 grid gap-x-8 sm:grid-cols-2">
+        <ul className="mt-8 grid grid-cols-[minmax(0,1fr)] gap-x-10 sm:grid-cols-2">
           {groups.map(([group, count]) => (
             <li
               key={group}
-              className="flex items-baseline justify-between gap-4 border-b border-border py-3 text-sm"
+              className="flex items-baseline justify-between gap-4 border-b border-border py-2.5 text-sm"
             >
-              <span className="text-foreground">{group}</span>
+              <span className="truncate text-secondary">{group}</span>
               <span className="shrink-0 font-mono text-xs tabular-nums text-muted">{count}</span>
             </li>
           ))}
@@ -61,11 +62,13 @@ export function Proof() {
       </Reveal>
 
       <Reveal delay={200}>
-        <div className="mt-10">
-          <ButtonLink href="/tools" variant="secondary">
-            Browse every tool
-          </ButtonLink>
-        </div>
+        <Link
+          href="/tools"
+          className="mt-8 inline-flex items-center gap-1.5 text-sm font-medium text-accent transition-colors duration-150 ease-out hover:text-accent-hover"
+        >
+          Browse every tool
+          <ArrowRight className="size-3.5" strokeWidth={2} aria-hidden="true" />
+        </Link>
       </Reveal>
     </Section>
   );

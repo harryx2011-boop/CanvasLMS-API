@@ -100,12 +100,12 @@ export function TerminalDemo() {
       role="img"
       aria-label={ARIA_LABEL}
       aria-live="off"
-      className="min-w-0 overflow-hidden rounded-card border border-code-border bg-code-bg text-code-fg"
+      className="min-w-0 overflow-hidden rounded-panel border border-code-border bg-code-bg text-code-fg shadow-[var(--shadow-raised)]"
     >
-      <div className="flex items-center gap-1.5 border-b border-code-border px-4 py-3">
-        <span className="size-2.5 rounded-full bg-code-border" />
-        <span className="size-2.5 rounded-full bg-code-border" />
-        <span className="size-2.5 rounded-full bg-code-border" />
+      <div className="flex items-center gap-1.5 border-b border-code-border px-4 py-2.5">
+        <span className="size-2 rounded-full bg-code-fg/15" />
+        <span className="size-2 rounded-full bg-code-fg/15" />
+        <span className="size-2 rounded-full bg-code-fg/15" />
       </div>
       <div className="min-h-[220px] px-4 py-4 font-mono text-[0.8125rem] leading-relaxed">
         <div className="flex gap-2">

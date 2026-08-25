@@ -6,7 +6,7 @@ const REPO = "https://github.com/harryx2011-boop/CanvasLMS-API.git";
 
 function Inline({ children }: { children: React.ReactNode }) {
   return (
-    <code className="rounded-control border border-border bg-subtle px-1.5 py-0.5 font-mono text-xs">{children}</code>
+    <code className="rounded-control border border-border bg-surface-raised px-1.5 py-0.5 font-mono text-xs">{children}</code>
   );
 }
 
@@ -20,7 +20,7 @@ function EnvNote() {
 
 function PipFallback({ activate }: { activate: string }) {
   return (
-    <details className="rounded-card border border-border bg-card p-4">
+    <details className="rounded-card border border-border bg-surface p-4">
       <summary className="cursor-pointer text-sm font-medium text-foreground">
         Prefer plain pip? Use a standard virtual environment instead
       </summary>

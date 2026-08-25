@@ -10,11 +10,11 @@ type Props = {
 };
 
 const base =
-  "inline-flex min-h-11 items-center justify-center gap-2 rounded-control px-5 text-sm font-medium transition-[translate,scale,background-color,color] duration-200 ease-out hover:-translate-y-0.5 active:scale-[0.96]";
+  "inline-flex min-h-9 items-center justify-center gap-2 rounded-control px-4 text-sm font-medium transition-[background-color,border-color,color,scale] duration-150 ease-out active:scale-[0.96]";
 
 const variants = {
   primary: "bg-accent text-accent-foreground hover:bg-accent-hover",
-  secondary: "border border-border bg-card text-foreground hover:bg-subtle",
+  secondary: "border border-border bg-surface text-foreground hover:border-border-strong hover:bg-surface-raised",
 };
 
 export function ButtonLink({ href, children, variant = "primary", external, className = "" }: Props) {

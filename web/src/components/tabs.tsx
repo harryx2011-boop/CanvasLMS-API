@@ -85,7 +85,7 @@ export function Tabs({ tabs, storageKey, hashSync = false, label }: Props) {
         role="tablist"
         aria-label={label}
         onKeyDown={onKeyDown}
-        className="flex flex-wrap gap-1 rounded-control border border-border bg-subtle p-1"
+        className="inline-flex flex-wrap gap-0.5 rounded-control border border-border bg-surface-raised p-1"
       >
         {tabs.map((tab) => {
           const selected = tab.id === active;
@@ -99,8 +99,8 @@ export function Tabs({ tabs, storageKey, hashSync = false, label }: Props) {
               aria-controls={`${baseId}-panel-${tab.id}`}
               tabIndex={selected ? 0 : -1}
               onClick={() => select(tab.id)}
-              className={`min-h-9 rounded-[4px] px-3 text-sm font-medium transition-[color,background-color,scale] duration-150 ease-out active:scale-[0.96] ${
-                selected ? "bg-card text-foreground shadow-sm" : "text-muted hover:text-foreground"
+              className={`min-h-8 rounded-[3px] px-2.5 text-[0.8125rem] font-medium transition-[color,background-color,scale] duration-150 ease-out active:scale-[0.96] ${
+                selected ? "bg-background text-foreground shadow-[var(--shadow-raised)]" : "text-secondary hover:text-foreground"
               }`}
             >
               {tab.label}

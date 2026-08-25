@@ -17,8 +17,12 @@ function withoutTransitions(apply: () => void) {
 
 export function ThemeToggle() {
   function toggle() {
-    const next = !document.documentElement.classList.contains("dark");
-    withoutTransitions(() => document.documentElement.classList.toggle("dark", next));
+    const root = document.documentElement;
+    const next = !root.classList.contains("dark");
+    withoutTransitions(() => {
+      root.classList.toggle("dark", next);
+      root.classList.toggle("light", !next);
+    });
     try {
       localStorage.setItem("theme", next ? "dark" : "light");
     } catch {}
