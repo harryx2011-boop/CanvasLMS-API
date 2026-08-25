@@ -55,7 +55,7 @@ export default function OpengraphImage() {
         </div>
 
         <div style={{ display: "flex", fontSize: "24px", color: "#c2410c" }}>
-          100 tools &middot; MCP server for Canvas LMS &middot; canvas-connect.vercel.app
+          100 tools &middot; MCP server for Canvas LMS &middot; canvas-mcp.vercel.app
         </div>
       </div>
     ),
