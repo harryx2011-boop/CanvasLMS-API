@@ -1,94 +1,59 @@
 import { Reveal } from "@/components/reveal";
 import { Section } from "@/components/section";
 
-function Mono({ children }: { children: React.ReactNode }) {
-  return (
-    <code className="rounded-[6px] border border-border bg-subtle px-1.5 py-0.5 font-mono text-xs">{children}</code>
-  );
-}
-
-const CARDS = [
-  {
-    title: "Course identifiers",
-    body: (
-      <>
-        <p>
-          Any <Mono>course</Mono> argument accepts a numeric Canvas id, a course code like <Mono>ENG101</Mono>, part of
-          the course name, or <Mono>sis_course_id:X</Mono> for a SIS-mapped id.
-        </p>
-        <p className="mt-3">
-          If you are not sure which course you want, call <Mono>list_courses</Mono> first and read the id off the
-          result.
-        </p>
-      </>
-    ),
-  },
-  {
-    title: "The confirm gate",
-    body: (
-      <p>
-        Every tool that changes Canvas takes a <Mono>confirm: bool = false</Mono> argument. Called without it, the tool
-        previews what would change and makes no request that alters Canvas. Call it again with <Mono>confirm=true</Mono>{" "}
-        after reviewing the preview. Nothing changes in Canvas by accident.
-      </p>
-    ),
-  },
-  {
-    title: "Permissions",
-    body: (
-      <p>
-        Every tool runs as the token owner. A student token cannot see other students&apos; private data or use educator
-        tools such as grading or bulk messaging. Those calls return the Canvas 403 with a hint about what permission is
-        missing.
-      </p>
-    ),
-  },
-  {
-    title: "Output and anonymization",
-    body: (
-      <p>
-        Every tool returns Markdown, formatted for direct display in a chat transcript. When{" "}
-        <Mono>CANVAS_ANONYMIZE_STUDENTS=true</Mono>, student names are replaced with a stable per-course pseudonym
-        instead of their real name.
-      </p>
-    ),
-  },
+const PROMPTS = [
+  { ask: "What's due this week across all my courses?", tool: "get_upcoming_assignments" },
+  { ask: "Show me my current grades.", tool: "get_grades" },
+  { ask: "Summarize the syllabus for ENG101.", tool: "get_syllabus" },
+  { ask: "List the unread messages in my Canvas inbox.", tool: "list_conversations" },
+  { ask: "Who on my peer review list still owes me a review?", tool: "get_peer_review_followup_list" },
+  { ask: "Grade the last five submissions against the rubric.", tool: "grade_with_rubric" },
 ];
 
-const PROMPTS = [
-  "What's due this week across all my courses?",
-  "Show me my current grades.",
-  "List the unread messages in my Canvas inbox.",
-  "Summarize the syllabus for ENG101.",
-  "Grade the last five submissions for Assignment 3 against the rubric (preview only).",
-  "Who on my peer review list still owes me a review?",
+const NOTES = [
+  {
+    term: "Course names",
+    def: 'Say "Physics" instead of an id. Course codes, partial names, and SIS ids all resolve.',
+  },
+  {
+    term: "Markdown out",
+    def: "Every tool answers in tables and lists your assistant can quote, never raw JSON.",
+  },
+  {
+    term: "Anonymization",
+    def: "One setting swaps student names for stable per-course pseudonyms in every tool.",
+  },
 ];
 
 export function Usage() {
   return (
-    <Section id="usage" eyebrow="Usage" title="How the tools behave" className="border-t border-border">
-      <div className="grid gap-6 sm:grid-cols-2">
-        {CARDS.map((card, i) => (
-          <Reveal key={card.title} delay={i * 60}>
-            <div className="h-full rounded-card border border-border bg-card p-6">
-              <h3 className="text-base font-semibold leading-tight tracking-tight">{card.title}</h3>
-              <div className="mt-3 text-sm leading-relaxed text-muted">{card.body}</div>
-            </div>
+    <Section
+      id="usage"
+      eyebrow="In practice"
+      title="Ask in your own words"
+      weight="standard"
+      className="border-t border-border"
+    >
+      <ul className="grid gap-x-10 sm:grid-cols-2">
+        {PROMPTS.map((prompt, i) => (
+          <Reveal key={prompt.tool} delay={i * 100}>
+            <li className="flex flex-col gap-1.5 border-b border-border py-4">
+              <span className="text-pretty text-base leading-snug">&ldquo;{prompt.ask}&rdquo;</span>
+              <span className="font-mono text-xs text-accent">{prompt.tool}</span>
+            </li>
           </Reveal>
         ))}
-      </div>
+      </ul>
 
-      <Reveal delay={240}>
-        <div className="mt-10">
-          <h3 className="text-xl font-semibold leading-tight tracking-tight">Example prompts</h3>
-          <ul className="mt-5 grid gap-x-8 gap-y-3 sm:grid-cols-2">
-            {PROMPTS.map((prompt) => (
-              <li key={prompt} className="text-sm leading-relaxed text-muted">
-                &ldquo;{prompt}&rdquo;
-              </li>
-            ))}
-          </ul>
-        </div>
+      <Reveal delay={200}>
+        <dl className="mt-12 grid gap-8 sm:grid-cols-3">
+          {NOTES.map((note) => (
+            <div key={note.term}>
+              <dt className="text-sm font-semibold tracking-tight">{note.term}</dt>
+              <dd className="mt-2 text-pretty text-sm leading-relaxed text-muted">{note.def}</dd>
+            </div>
+          ))}
+        </dl>
       </Reveal>
     </Section>
   );

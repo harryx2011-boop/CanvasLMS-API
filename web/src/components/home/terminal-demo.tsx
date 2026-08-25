@@ -100,7 +100,7 @@ export function TerminalDemo() {
       role="img"
       aria-label={ARIA_LABEL}
       aria-live="off"
-      className="overflow-hidden rounded-card border border-code-border bg-code-bg text-code-fg"
+      className="min-w-0 overflow-hidden rounded-card border border-code-border bg-code-bg text-code-fg"
     >
       <div className="flex items-center gap-1.5 border-b border-code-border px-4 py-3">
         <span className="size-2.5 rounded-full bg-code-border" />

@@ -39,13 +39,13 @@ export function Nav() {
           })}
         </nav>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-3">
           <a
             href={site.repo}
             target="_blank"
             rel="noreferrer"
             aria-label="GitHub repository"
-            className="inline-flex size-10 items-center justify-center rounded-control text-muted transition-colors hover:bg-subtle hover:text-foreground"
+            className="inline-flex size-10 items-center justify-center rounded-control text-muted transition-[color,background-color,scale] duration-150 ease-out hover:bg-subtle hover:text-foreground active:scale-[0.96]"
           >
             <GithubIcon className="size-4" />
           </a>
@@ -56,9 +56,9 @@ export function Nav() {
             aria-expanded={open}
             aria-controls="mobile-nav"
             aria-label={open ? "Close menu" : "Open menu"}
-            className="inline-flex size-10 items-center justify-center rounded-control text-muted transition-colors hover:bg-subtle hover:text-foreground md:hidden"
+            className="ml-1 inline-flex size-10 items-center justify-center rounded-control text-muted transition-[color,background-color,scale] duration-150 ease-out hover:bg-subtle hover:text-foreground active:scale-[0.96] md:hidden"
           >
-            {open ? <X className="size-5" /> : <Menu className="size-5" />}
+            {open ? <X className="size-5" strokeWidth={1.5} /> : <Menu className="size-5" strokeWidth={1.5} />}
           </button>
         </div>
       </div>

@@ -99,7 +99,7 @@ export function Tabs({ tabs, storageKey, hashSync = false, label }: Props) {
               aria-controls={`${baseId}-panel-${tab.id}`}
               tabIndex={selected ? 0 : -1}
               onClick={() => select(tab.id)}
-              className={`min-h-9 rounded-[6px] px-3 text-sm font-medium transition-colors ${
+              className={`min-h-9 rounded-[4px] px-3 text-sm font-medium transition-[color,background-color,scale] duration-150 ease-out active:scale-[0.96] ${
                 selected ? "bg-card text-foreground shadow-sm" : "text-muted hover:text-foreground"
               }`}
             >

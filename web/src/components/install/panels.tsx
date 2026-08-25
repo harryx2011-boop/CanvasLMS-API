@@ -6,7 +6,7 @@ const REPO = "https://github.com/harryx2011-boop/CanvasLMS-API.git";
 
 function Inline({ children }: { children: React.ReactNode }) {
   return (
-    <code className="rounded-[6px] border border-border bg-subtle px-1.5 py-0.5 font-mono text-xs">{children}</code>
+    <code className="rounded-control border border-border bg-subtle px-1.5 py-0.5 font-mono text-xs">{children}</code>
   );
 }
 
@@ -27,6 +27,7 @@ function PipFallback({ activate }: { activate: string }) {
       <div className="mt-4">
         <CodeBlock
           title="install (pip)"
+          className="rounded-control"
           code={["python -m venv .venv", activate, "pip install -e ."].join("\n")}
         />
       </div>
@@ -42,7 +43,7 @@ export const osPanels: Record<OS, React.ReactNode> = {
       {clone}
       <CodeBlock
         title="install (uv)"
-        code={["uv venv .venv", "uv pip install --python .venv\Scripts\python.exe -e ."].join("\n")}
+        code={["uv venv .venv", "uv pip install --python .venv\\Scripts\\python.exe -e ."].join("\n")}
       />
       <PipFallback activate=".venv\Scripts\activate" />
       <CodeBlock title="env file" code="copy .env.example .env" />
@@ -75,7 +76,7 @@ export const osPanels: Record<OS, React.ReactNode> = {
 const jsonConfig = (command: string) =>
   `{\n  "mcpServers": {\n    "canvaslms-api": {\n      "command": "${command}"\n    }\n  }\n}`;
 
-const WIN_BIN = "C:\path\to\CanvasLMS-API\.venv\Scripts\canvaslms-api.exe";
+const WIN_BIN = "C:\\path\\to\\CanvasLMS-API\\.venv\\Scripts\\canvaslms-api.exe";
 const NIX_BIN = "/path/to/CanvasLMS-API/.venv/bin/canvaslms-api";
 
 function DotEnvNote() {
@@ -116,7 +117,7 @@ export const clientTabs: ClientTabDef[] = [
         <p className="text-sm leading-relaxed text-muted">Edit the configuration file for your platform.</p>
         <ul className="list-disc space-y-1 pl-5 text-sm leading-relaxed text-muted">
           <li>
-            Windows: <Inline>%APPDATA%\Claude\claude_desktop_config.json</Inline>
+            Windows: <Inline>{"%APPDATA%\\Claude\\claude_desktop_config.json"}</Inline>
           </li>
           <li>
             macOS: <Inline>~/Library/Application Support/Claude/claude_desktop_config.json</Inline>

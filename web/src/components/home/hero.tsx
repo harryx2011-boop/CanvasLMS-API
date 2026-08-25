@@ -1,56 +1,50 @@
 import { ArrowUpRight, Plug } from "lucide-react";
 import { ButtonLink } from "@/components/button-link";
 import { Container } from "@/components/container";
-import { CodeBlock } from "@/components/code-block";
 import { GithubIcon } from "@/components/github-icon";
 import { Reveal } from "@/components/reveal";
 import { site } from "@/lib/site";
 import { TerminalDemo } from "./terminal-demo";
 
-const INSTALL_COMMAND = `claude mcp add --scope user canvaslms-api -- "/path/to/CanvasLMS-API/.venv/bin/canvaslms-api"`;
-
 export function Hero() {
   return (
-    <section className="py-16 sm:py-24">
+    <section className="py-20 sm:py-28 lg:py-32">
       <Container>
-        <div className="grid gap-12 lg:grid-cols-2 lg:items-center lg:gap-10">
+        <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-14">
           <div>
             <Reveal>
               <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-soft px-3 py-1 text-sm font-medium text-accent">
-                <Plug className="size-4" />
+                <Plug className="size-4" strokeWidth={1.5} />
                 MCP server for Canvas LMS · v{site.version}
               </span>
             </Reveal>
-            <Reveal delay={60}>
-              <h1 className="mt-5 text-5xl font-semibold leading-tight tracking-tight sm:text-6xl">
-                Ask your AI what&apos;s due.
-                <br />
-                It actually knows.
+            <Reveal delay={100}>
+              <h1 className="mt-5 text-balance text-4xl font-semibold leading-[1.1] tracking-tight sm:text-5xl">
+                Ask your AI what&apos;s due. It actually knows.
               </h1>
             </Reveal>
-            <Reveal delay={120}>
-              <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted">
-                Canvas Connect is a local MCP server that gives Claude, Cursor, and other assistants your Canvas
-                account: 100 tools for courses, grades, assignments, discussions, and more. Runs on your machine
-                with your own token.
+            <Reveal delay={200}>
+              <p className="mt-5 max-w-lg text-pretty text-lg leading-relaxed text-muted">
+                A local MCP server that hands Claude, Cursor, and other assistants your real Canvas account &mdash;
+                {" "}{site.toolCount} tools, your own token, nothing leaves your machine.
               </p>
             </Reveal>
-            <Reveal delay={180}>
+            <Reveal delay={300}>
               <div className="mt-8">
-                <ButtonLink href={site.repo} external variant="primary">
-                  <GithubIcon className="size-4" />
-                  View on GitHub
-                  <ArrowUpRight className="size-4" />
-                </ButtonLink>
-              </div>
-            </Reveal>
-            <Reveal delay={240}>
-              <div className="mt-6 max-w-xl">
-                <CodeBlock code={INSTALL_COMMAND} title="terminal" />
+                <div className="flex flex-wrap items-center gap-3">
+                  <ButtonLink href="#install" variant="primary">
+                    Install it
+                  </ButtonLink>
+                  <ButtonLink href={site.repo} external variant="secondary">
+                    <GithubIcon className="size-4" />
+                    View on GitHub
+                    <ArrowUpRight className="size-4" strokeWidth={1.5} />
+                  </ButtonLink>
+                </div>
               </div>
             </Reveal>
           </div>
-          <Reveal delay={120}>
+          <Reveal delay={200} className="min-w-0">
             <TerminalDemo />
           </Reveal>
         </div>

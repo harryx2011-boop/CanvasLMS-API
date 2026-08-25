@@ -10,7 +10,7 @@ type Props = {
 };
 
 const base =
-  "inline-flex min-h-11 items-center justify-center gap-2 rounded-control px-5 text-sm font-medium transition-[transform,background-color,color] duration-200 ease-out hover:-translate-y-0.5";
+  "inline-flex min-h-11 items-center justify-center gap-2 rounded-control px-5 text-sm font-medium transition-[translate,scale,background-color,color] duration-200 ease-out hover:-translate-y-0.5 active:scale-[0.96]";
 
 const variants = {
   primary: "bg-accent text-accent-foreground hover:bg-accent-hover",

@@ -6,23 +6,23 @@ import { site } from "@/lib/site";
 
 export function ClosingCta() {
   return (
-    <section className="border-t border-border py-16 sm:py-24">
+    <section className="border-t border-border py-24 sm:py-32">
       <Container>
         <Reveal>
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-2xl font-semibold leading-tight tracking-tight sm:text-4xl">
-              Free, local, MIT licensed.
+            <h2 className="text-balance text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
+              Ask it what&rsquo;s due tonight.
             </h2>
-            <p className="mt-4 text-base leading-relaxed text-muted sm:text-lg">
-              Install it once, point it at your Canvas token, and every assistant you use gets the same 100 tools.
+            <p className="mx-auto mt-4 max-w-lg text-pretty text-base leading-relaxed text-muted sm:text-lg">
+              Free and MIT licensed. Install it once and every assistant you use gets the same {site.toolCount} tools.
             </p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-              <ButtonLink href={site.repo} external variant="primary">
+              <ButtonLink href="#install" variant="primary">
+                Install it
+              </ButtonLink>
+              <ButtonLink href={site.repo} external variant="secondary">
                 <GithubIcon className="size-4" />
                 View on GitHub
-              </ButtonLink>
-              <ButtonLink href="#install" variant="secondary">
-                Install it
               </ButtonLink>
             </div>
           </div>

@@ -10,18 +10,19 @@ export function Install() {
       eyebrow="Install"
       title="Set it up in about ten minutes"
       lead="Python 3.11 or newer, a Canvas account with a personal access token, and uv for environment management. Get a token under Account > Settings > Approved Integrations > New Access Token; Canvas shows it once."
+      weight="pivotal"
       className="border-t border-border"
     >
       <Reveal>
         <OsTabs panels={osPanels} />
       </Reveal>
 
-      <Reveal delay={60}>
+      <Reveal delay={100}>
         <div className="mt-14">
           <h3 className="text-xl font-semibold leading-tight tracking-tight">Connect your assistant</h3>
           <p className="mt-3 max-w-2xl text-base leading-relaxed text-muted">
             Every client points at the same executable. The server reads{" "}
-            <code className="rounded-[6px] border border-border bg-subtle px-1.5 py-0.5 font-mono text-xs">.env</code>{" "}
+            <code className="rounded-control border border-border bg-subtle px-1.5 py-0.5 font-mono text-xs">.env</code>{" "}
             from the repository folder at startup, so no environment variables go in the client configuration.
           </p>
           <div className="mt-6">

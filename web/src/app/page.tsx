@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { ClosingCta } from "@/components/home/closing-cta";
 import { Hero } from "@/components/home/hero";
 import { Install } from "@/components/home/install";
+import { Problem } from "@/components/home/problem";
+import { Proof } from "@/components/home/proof";
+import { Safety } from "@/components/home/safety";
 import { Usage } from "@/components/home/usage";
 import { site } from "@/lib/site";
 
@@ -14,8 +17,11 @@ export default function HomePage() {
   return (
     <>
       <Hero />
-      <Install />
+      <Problem />
+      <Safety />
       <Usage />
+      <Proof />
+      <Install />
       <ClosingCta />
     </>
   );
