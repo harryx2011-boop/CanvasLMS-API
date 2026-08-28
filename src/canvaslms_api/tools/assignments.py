@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import statistics
-from typing import Any
+from typing import Any, Literal, get_args
 
 from fastmcp import FastMCP
 from fastmcp.exceptions import ToolError
@@ -9,7 +9,20 @@ from fastmcp.exceptions import ToolError
 from .. import md
 from ..app import DESTRUCTIVE, READ, WRITE, App
 
-BUCKETS = {"past", "overdue", "undated", "ungraded", "unsubmitted", "upcoming", "future"}
+# Closed vocabularies are declared as Literal so FastMCP emits a real JSON
+# Schema `enum` and a client can reject a bad value before the call is made.
+# Prose in an `Args:` block cannot: the model learns the allowed set by eating a
+# ToolError and retrying, which costs a round trip the first time every time.
+#
+# The runtime checks below are kept — a schema constrains a well-behaved client,
+# and a server does not get to assume one.
+Bucket = Literal["past", "overdue", "undated", "ungraded", "unsubmitted", "upcoming", "future"]
+GradingType = Literal["points", "percent", "letter_grade", "gpa_scale", "pass_fail", "not_graded"]
+StatusFilter = Literal["submitted", "unsubmitted", "graded", "late", "missing"]
+
+BUCKETS = set(get_args(Bucket))
+# Deliberately NOT a Literal: the parameter takes a comma-joined LIST of these,
+# so the string a caller sends is never itself one of the values.
 SUBMISSION_TYPES = {
     "online_text_entry",
     "online_url",
@@ -24,8 +37,8 @@ SUBMISSION_TYPES = {
     "student_annotation",
     "none",
 }
-GRADING_TYPES = {"points", "percent", "letter_grade", "gpa_scale", "pass_fail", "not_graded"}
-STATUS_FILTERS = {"submitted", "unsubmitted", "graded", "late", "missing"}
+GRADING_TYPES = set(get_args(GradingType))
+STATUS_FILTERS = set(get_args(StatusFilter))
 
 
 def _submission_status(submission: dict[str, Any] | None) -> str:
@@ -61,7 +74,7 @@ def _assignment_payload(
     submission_types: str | None = None,
     due_at: str | None = None,
     points_possible: float | None = None,
-    grading_type: str | None = None,
+    grading_type: GradingType | None = None,
     published: bool | None = None,
     peer_reviews: bool | None = None,
     automatic_peer_reviews: bool | None = None,
@@ -106,7 +119,7 @@ def _assignment_payload(
 
 def register(mcp: FastMCP, app: App) -> None:
     @mcp.tool(annotations=READ)
-    async def list_assignments(course: str | int, bucket: str | None = None) -> str:
+    async def list_assignments(course: str | int, bucket: Bucket | None = None) -> str:
         """List assignments in a course, with your submission status.
 
         Args:
@@ -195,7 +208,7 @@ def register(mcp: FastMCP, app: App) -> None:
 
     @mcp.tool(annotations=READ)
     async def list_submissions(
-        course: str | int, assignment_id: str | int, status: str | None = None
+        course: str | int, assignment_id: str | int, status: StatusFilter | None = None
     ) -> str:
         """List student submissions for an assignment.
 
@@ -374,7 +387,7 @@ def register(mcp: FastMCP, app: App) -> None:
         submission_types: str = "online_text_entry",
         due_at: str | None = None,
         points_possible: float | None = None,
-        grading_type: str | None = None,
+        grading_type: GradingType | None = None,
         published: bool = False,
         peer_reviews: bool = False,
         automatic_peer_reviews: bool = False,
@@ -448,7 +461,7 @@ def register(mcp: FastMCP, app: App) -> None:
         submission_types: str | None = None,
         due_at: str | None = None,
         points_possible: float | None = None,
-        grading_type: str | None = None,
+        grading_type: GradingType | None = None,
         published: bool | None = None,
         peer_reviews: bool | None = None,
         automatic_peer_reviews: bool | None = None,

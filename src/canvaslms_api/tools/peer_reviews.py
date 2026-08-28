@@ -9,7 +9,7 @@ import tempfile
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal, get_args
 
 from fastmcp import FastMCP
 from fastmcp.exceptions import ToolError
@@ -18,7 +18,13 @@ from .. import md
 from ..app import DESTRUCTIVE, READ, WRITE, App
 from ..client import CanvasError
 
-PRIORITIES = {"high", "medium", "low"}
+# Closed vocabularies are Literal so FastMCP emits a JSON Schema `enum`
+# and a client can reject a bad value before the call. Prose in an `Args:`
+# block cannot; the model would learn the set by eating a ToolError.
+# Runtime checks are kept — a schema binds a well-behaved client only.
+Priority = Literal["high", "medium", "low"]
+
+PRIORITIES = set(get_args(Priority))
 
 GENERIC_PHRASES = [
     "good job", "nice work", "well done", "great job", "looks good",
@@ -428,7 +434,7 @@ def register(mcp: FastMCP, app: App) -> None:
     async def get_peer_review_followup_list(
         course: str | int,
         assignment_id: str | int,
-        priority_filter: str | None = None,
+        priority_filter: Priority | None = None,
         days_threshold: int = 3,
     ) -> str:
         """List students with pending peer reviews, ranked by follow-up priority.
@@ -493,7 +499,9 @@ def register(mcp: FastMCP, app: App) -> None:
                 row.append(md.fmt_date(c.get("created_at")))
                 row.append(c.get("comment"))
                 rows.append(tuple(row))
-        return md.table(headers, rows)
+        # Every comment column here was written by a student reviewer.
+        rendered = md.table(headers, rows)
+        return md.untrusted(rendered, "peer review comments") if rows else rendered
 
     @mcp.tool(annotations=READ)
     async def analyze_peer_review_quality(
@@ -740,7 +748,11 @@ def register(mcp: FastMCP, app: App) -> None:
                 reviewer = app.person(r.get("assessor")) if include_student_names else r.get("assessor_id")
                 for c in _review_comments(r):
                     lines.append(f"- **{reviewer}** ({md.fmt_date(c.get('created_at'))}): {c.get('comment')}")
-            body = "\n".join(lines) if lines else "_no feedback received_"
+            body = (
+                md.untrusted("\n".join(lines), "peer review feedback")
+                if lines
+                else "_no feedback received_"
+            )
             blocks.append(md.section(name, body, level=3))
         return md.join(*blocks)
 

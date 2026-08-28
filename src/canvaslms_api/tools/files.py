@@ -3,7 +3,7 @@ from __future__ import annotations
 import mimetypes
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal, get_args
 
 import httpx
 from fastmcp import FastMCP
@@ -12,9 +12,17 @@ from fastmcp.exceptions import ToolError
 from .. import md
 from ..app import READ, WRITE, App
 
-SORT_FIELDS = {"name", "size", "created_at", "updated_at", "content_type"}
-ORDERS = {"asc", "desc"}
-ON_DUPLICATE = {"rename", "overwrite"}
+# Closed vocabularies are Literal so FastMCP emits a JSON Schema `enum`
+# and a client can reject a bad value before the call. Prose in an `Args:`
+# block cannot; the model would learn the set by eating a ToolError.
+# Runtime checks are kept — a schema binds a well-behaved client only.
+SortField = Literal["name", "size", "created_at", "updated_at", "content_type"]
+Order = Literal["asc", "desc"]
+OnDuplicate = Literal["rename", "overwrite"]
+
+SORT_FIELDS = set(get_args(SortField))
+ORDERS = set(get_args(Order))
+ON_DUPLICATE = set(get_args(OnDuplicate))
 TEXT_LIKE_PREFIXES = ("text/", "application/json", "application/xml")
 TEXT_LIKE_TYPES = {"text/csv", "text/markdown", "application/csv"}
 MAX_TEXT_CHARS = 20000
@@ -50,8 +58,8 @@ def register(mcp: FastMCP, app: App) -> None:
     async def list_files(
         course: str | int,
         search_term: str | None = None,
-        sort: str = "name",
-        order: str = "asc",
+        sort: SortField = "name",
+        order: Order = "asc",
     ) -> str:
         """List files in a Canvas course.
 
@@ -126,7 +134,11 @@ def register(mcp: FastMCP, app: App) -> None:
         response = await app.client.download(info["url"])
         text = response.content.decode("utf-8", errors="replace")
         body = md.truncate(text, MAX_TEXT_CHARS)
-        return md.join(md.kv([("name", name), ("type", content_type), ("size", _human_size(size))]), md.section("Content", body))
+        # Anyone who can upload to the course wrote this file.
+        return md.join(
+            md.kv([("name", name), ("type", content_type), ("size", _human_size(size))]),
+            md.section("Content", md.untrusted(body, f"file: {name}") if body else "_empty_"),
+        )
 
     @mcp.tool(annotations=READ)
     async def download_file(
@@ -180,7 +192,7 @@ def register(mcp: FastMCP, app: App) -> None:
         file_path: str,
         folder_path: str | None = None,
         display_name: str | None = None,
-        on_duplicate: str = "rename",
+        on_duplicate: OnDuplicate = "rename",
         confirm: bool = False,
     ) -> str:
         """Upload a local file to a Canvas course.

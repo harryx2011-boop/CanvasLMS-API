@@ -294,7 +294,17 @@ def register(mcp: FastMCP, app: App) -> None:
             (app.person(c.get("author")), md.fmt_date(c.get("created_at")), c.get("comment"))
             for c in comments
         ]
-        blocks = [body, md.section("Comments", md.table(["author", "date", "comment"], comment_rows))]
+        # The comment column is written by graders and peers. Fenced around the
+        # whole table rather than per cell: md.cell flattens newlines to keep a
+        # table parsable, which a per-cell fence would fight.
+        comment_table = md.table(["author", "date", "comment"], comment_rows)
+        blocks = [
+            body,
+            md.section(
+                "Comments",
+                md.untrusted(comment_table, "submission comments") if comments else comment_table,
+            ),
+        ]
 
         rubric = submission.get("rubric_assessment")
         if rubric:

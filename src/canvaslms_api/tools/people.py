@@ -3,7 +3,7 @@ from __future__ import annotations
 import csv
 import tempfile
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal, get_args
 
 from fastmcp import FastMCP
 from fastmcp.exceptions import ToolError
@@ -11,7 +11,13 @@ from fastmcp.exceptions import ToolError
 from .. import md
 from ..app import READ, WRITE, App
 
-ROLES = {"student", "teacher", "ta", "observer", "designer"}
+# Closed vocabularies are Literal so FastMCP emits a JSON Schema `enum`
+# and a client can reject a bad value before the call. Prose in an `Args:`
+# block cannot; the model would learn the set by eating a ToolError.
+# Runtime checks are kept — a schema binds a well-behaved client only.
+Role = Literal["student", "teacher", "ta", "observer", "designer"]
+
+ROLES = set(get_args(Role))
 
 
 def _enrollment_summary(enrollments: list[dict[str, Any]]) -> tuple[str, str, str]:
@@ -23,7 +29,7 @@ def _enrollment_summary(enrollments: list[dict[str, Any]]) -> tuple[str, str, st
 
 def register(mcp: FastMCP, app: App) -> None:
     @mcp.tool(annotations=READ)
-    async def list_users(course: str | int, role: str | None = None) -> str:
+    async def list_users(course: str | int, role: Role | None = None) -> str:
         """List users enrolled in a course, with role, state, and section.
 
         Args:
@@ -77,7 +83,7 @@ def register(mcp: FastMCP, app: App) -> None:
 
     @mcp.tool(annotations=READ)
     async def check_enrollment(
-        course: str | int, login_id: str, role: str | None = None, active_only: bool = True
+        course: str | int, login_id: str, role: Role | None = None, active_only: bool = True
     ) -> str:
         """Check whether a specific login id is enrolled in a course. Never returns the roster.
 

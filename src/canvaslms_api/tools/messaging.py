@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal, get_args
 
 from fastmcp import FastMCP
 from fastmcp.exceptions import ToolError
@@ -9,8 +9,15 @@ from .. import md
 from ..app import DESTRUCTIVE, READ, WRITE, App
 from ..client import CanvasError
 
-SCOPES = {"unread", "starred", "archived"}
+# Closed vocabularies are Literal so FastMCP emits a JSON Schema `enum`
+# and a client can reject a bad value before the call. Prose in an `Args:`
+# block cannot; the model would learn the set by eating a ToolError.
+# Runtime checks are kept — a schema binds a well-behaved client only.
+Scope = Literal["unread", "starred", "archived"]
+
+SCOPES = set(get_args(Scope))
 MAX_RECIPIENTS = 100
+CONVERSATION_CAP = 50
 
 
 def _alias_description(recipient: str, course_name: str) -> str | None:
@@ -43,7 +50,7 @@ async def _resolve_recipient_label(app: App, cid: int, course_name: str, recipie
 def register(mcp: FastMCP, app: App) -> None:
     @mcp.tool(annotations=READ)
     async def list_conversations(
-        scope: str | None = None,
+        scope: Scope | None = None,
         course: str | int | None = None,
         include_participants: bool = True,
     ) -> str:
@@ -62,7 +69,13 @@ def register(mcp: FastMCP, app: App) -> None:
         if course is not None:
             cid = await app.course_id(course)
             params["filter[]"] = [f"course_{cid}"]
-        conversations = await app.client.get_all("/conversations", params, limit=50)
+        # One over the cap, so a full inbox is distinguishable from an inbox of
+        # exactly 50. Returning 50 silently either way makes a partial list read
+        # as the whole thing — the failure every other truncation in this
+        # codebase announces with `[truncated N characters]`.
+        conversations = await app.client.get_all("/conversations", params, limit=CONVERSATION_CAP + 1)
+        more = len(conversations) > CONVERSATION_CAP
+        conversations = conversations[:CONVERSATION_CAP]
         conversations.sort(key=lambda c: c.get("last_message_at") or "", reverse=True)
         headers = ["id", "subject", "last message", "course", "unread", "messages"]
         if include_participants:
@@ -84,7 +97,12 @@ def register(mcp: FastMCP, app: App) -> None:
                 ]
             )
             rows.append(tuple(row))
-        return md.table(headers, rows)
+        rendered = md.table(headers, rows)
+        if more:
+            rendered += (
+                f"\n\n_Showing the {CONVERSATION_CAP} most recent conversations; there are more._"
+            )
+        return rendered
 
     @mcp.tool(annotations=READ)
     async def get_conversation(conversation_id: str | int, auto_mark_read: bool = False) -> str:
@@ -116,9 +134,16 @@ def register(mcp: FastMCP, app: App) -> None:
                 if attachments
                 else None
             )
-            lines = [f"**{author}** ({md.fmt_date(message.get('created_at'))})", "", body or "_empty_"]
+            # Author and date are ours. The body, and the filenames the sender
+            # chose, are theirs — so the fence goes around those.
+            inner = [body] if body else []
             if attach_text:
-                lines.append(f"\nAttachments: {attach_text}")
+                inner.append(f"Attachments: {attach_text}")
+            lines = [
+                f"**{author}** ({md.fmt_date(message.get('created_at'))})",
+                "",
+                md.untrusted("\n\n".join(inner), "conversation message") if inner else "_empty_",
+            ]
             blocks.append(md.section("", "\n".join(lines), level=3))
         return md.join(*blocks)
 

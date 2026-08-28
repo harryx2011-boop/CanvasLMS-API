@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal, get_args
 
 from fastmcp import FastMCP
 from fastmcp.exceptions import ToolError
@@ -8,6 +8,14 @@ from fastmcp.exceptions import ToolError
 from .. import md
 from ..app import DESTRUCTIVE, READ, WRITE, App
 
+# Closed vocabularies are Literal so FastMCP emits a JSON Schema `enum`
+# and a client can reject a bad value before the call. Prose in an `Args:`
+# block cannot; the model would learn the set by eating a ToolError.
+# Runtime checks are kept — a schema binds a well-behaved client only.
+ItemType = Literal["File", "Discussion", "Assignment", "Quiz", "SubHeader", "ExternalUrl", "Page"]
+
+# Canvas accepts more item types than the four this server creates directly;
+# CONTENT_TYPES stays the narrower create-time set it always was.
 CONTENT_TYPES = {"File", "Discussion", "Assignment", "Quiz"}
 
 
@@ -261,7 +269,7 @@ def register(mcp: FastMCP, app: App) -> None:
     async def add_module_item(
         course: str | int,
         module_id: str | int,
-        item_type: str,
+        item_type: ItemType,
         content_id: str | int | None = None,
         title: str | None = None,
         position: int | None = None,

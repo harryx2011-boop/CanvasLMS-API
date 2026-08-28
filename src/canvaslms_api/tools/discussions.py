@@ -149,7 +149,13 @@ def register(mcp: FastMCP, app: App) -> None:
                 ("updated", md.fmt_date(entry.get("updated_at"))),
             ]
         )
-        message = md.section("Message", md.html_to_text(entry.get("message"), 1500) or "_no message_")
+        # Fenced per SECTION, not per line: a fence around every bullet would be
+        # unreadable, and the boundary the model needs is "everything in this
+        # block was written by course participants".
+        text = md.html_to_text(entry.get("message"), 1500)
+        message = md.section(
+            "Message", md.untrusted(text, "discussion entry") if text else "_no message_"
+        )
         blocks = [body, message]
         if include_replies:
             replies = await app.client.get_all(
@@ -161,7 +167,9 @@ def register(mcp: FastMCP, app: App) -> None:
                     f"{md.html_to_text(r.get('message'), 1500)}"
                     for r in replies
                 ]
-                blocks.append(md.section("Replies", "\n".join(lines)))
+                blocks.append(
+                    md.section("Replies", md.untrusted("\n".join(lines), "discussion replies"))
+                )
             else:
                 blocks.append(md.section("Replies", "_none_"))
         return md.join(*blocks)
@@ -211,7 +219,12 @@ def register(mcp: FastMCP, app: App) -> None:
                     return
 
         walk(view.get("view") or [], 0)
-        blocks.append(md.section("Conversation", "\n".join(lines) if lines else "_no entries_"))
+        blocks.append(
+            md.section(
+                "Conversation",
+                md.untrusted("\n".join(lines), "discussion thread") if lines else "_no entries_",
+            )
+        )
         if truncated:
             blocks.append("_Truncated at 300 entries._")
         return md.join(*blocks)
