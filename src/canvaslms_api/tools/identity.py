@@ -57,7 +57,10 @@ def register(mcp: FastMCP, app: App) -> None:
             (entry["name"], entry["code"], cid, ", ".join(sorted(set(entry["roles"]))), entry["state"])
             for cid, entry in by_course.items()
         ]
-        return md.table(["course", "code", "id", "role(s)", "state"], rows)
+        table = md.table(["course", "code", "id", "role(s)", "state"], rows)
+        if enrollments.capped:
+            table += f"\n\n{md.capped_notice(len(enrollments))}"
+        return table
 
     @mcp.tool(annotations=READ)
     async def list_courses() -> str:
@@ -76,7 +79,10 @@ def register(mcp: FastMCP, app: App) -> None:
                     enrollment.get("computed_current_grade"),
                 )
             )
-        return md.table(["name", "code", "id", "term", "score", "grade"], rows)
+        table = md.table(["name", "code", "id", "term", "score", "grade"], rows)
+        if courses.capped:
+            table += f"\n\n{md.capped_notice(len(courses))}"
+        return table
 
     @mcp.tool(annotations=READ)
     async def get_course(course: str | int) -> str:
@@ -144,12 +150,18 @@ def register(mcp: FastMCP, app: App) -> None:
                 (m.get("name"), m.get("state"), len(m.get("items") or []))
                 for m in modules
             ]
-            blocks.append(md.section("Modules", md.table(["module", "state", "items"], rows)))
+            table = md.table(["module", "state", "items"], rows)
+            if modules.capped:
+                table += f"\n\n{md.capped_notice(len(modules))}"
+            blocks.append(md.section("Modules", table))
 
         if include_pages:
             pages = await app.client.get_all(f"/courses/{cid}/pages")
             rows = [(p.get("title"), p.get("url"), p.get("published")) for p in pages]
-            blocks.append(md.section("Pages", md.table(["title", "url", "published"], rows)))
+            table = md.table(["title", "url", "published"], rows)
+            if pages.capped:
+                table += f"\n\n{md.capped_notice(len(pages))}"
+            blocks.append(md.section("Pages", table))
 
         return md.join(*blocks)
 
@@ -178,7 +190,11 @@ def register(mcp: FastMCP, app: App) -> None:
             ]
             header = f"{module.get('name')} (state: {module.get('state')}, items: {len(items)})"
             body = md.bullets(item_lines) if item_lines else "_no items_"
+            if getattr(items, "capped", False):
+                body += f"\n\n{md.capped_notice(len(items))}"
             blocks.append(md.section(header, body, level=3))
+        if modules.capped:
+            blocks.append(md.capped_notice(len(modules)))
         return md.join(*blocks)
 
     @mcp.tool(annotations=READ)

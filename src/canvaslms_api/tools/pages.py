@@ -54,7 +54,10 @@ def register(mcp: FastMCP, app: App) -> None:
             )
             for p in pages
         ]
-        return md.table(["url", "title", "updated", "published", "front page"], rows)
+        table = md.table(["url", "title", "updated", "published", "front page"], rows)
+        if pages.capped:
+            table += f"\n\n{md.capped_notice(len(pages))}"
+        return table
 
     @mcp.tool(annotations=READ)
     async def get_page(course: str | int, page: str) -> str:

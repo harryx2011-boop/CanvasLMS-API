@@ -47,7 +47,10 @@ def register(mcp: FastMCP, app: App) -> None:
         for user in users:
             roles, states, sections = _enrollment_summary(user.get("enrollments") or [])
             rows.append((user.get("id"), app.person(user), roles, states, sections))
-        return md.table(["id", "name", "role(s)", "state(s)", "section(s)"], rows)
+        table = md.table(["id", "name", "role(s)", "state(s)", "section(s)"], rows)
+        if users.capped:
+            table += f"\n\n{md.capped_notice(len(users))}"
+        return table
 
     @mcp.tool(annotations=READ)
     async def list_groups(course: str | int) -> str:
@@ -64,11 +67,13 @@ def register(mcp: FastMCP, app: App) -> None:
             ]
         )
         category_names = {c.get("id"): c.get("name") for c in categories}
+        member_capped = False
         rows = []
         for group in groups:
             members = group.get("users")
             if members is None:
                 members = await app.client.get_all(f"/groups/{group['id']}/users")
+                member_capped = member_capped or members.capped
             member_names = ", ".join(app.person(m) for m in members) or md.NONE
             rows.append(
                 (
@@ -79,7 +84,12 @@ def register(mcp: FastMCP, app: App) -> None:
                     member_names,
                 )
             )
-        return md.table(["category", "group", "id", "members", "member names"], rows)
+        table = md.table(["category", "group", "id", "members", "member names"], rows)
+        if groups.capped:
+            table += f"\n\n{md.capped_notice(len(groups))}"
+        if member_capped:
+            table += "\n\n_One or more groups' member lists were capped at 1000 and more exist. Narrow the query to see the rest._"
+        return table
 
     @mcp.tool(annotations=READ)
     async def check_enrollment(
@@ -122,13 +132,14 @@ def register(mcp: FastMCP, app: App) -> None:
             if enrollments:
                 matches.append(enrollments)
 
+        cap_notice = md.capped_notice(len(candidates)) if candidates.capped else ""
         if not matches:
-            return "**NOT ENROLLED**"
+            return md.join("**NOT ENROLLED**", cap_notice)
         if len(matches) > 1:
-            return f"**AMBIGUOUS** ({len(matches)} matching accounts found)"
+            return md.join(f"**AMBIGUOUS** ({len(matches)} matching accounts found)", cap_notice)
 
         roles, states, _ = _enrollment_summary(matches[0])
-        return md.join("**ENROLLED**", md.kv([("role(s)", roles), ("state(s)", states)]))
+        return md.join("**ENROLLED**", md.kv([("role(s)", roles), ("state(s)", states)]), cap_notice)
 
     @mcp.tool(annotations=WRITE)
     async def export_anonymization_map(
@@ -169,6 +180,8 @@ def register(mcp: FastMCP, app: App) -> None:
                 ("destination", str(dest)),
             ]
         )
+        if students.capped:
+            details = md.join(details, md.capped_notice(len(students)))
         if not confirm:
             return md.preview("export_anonymization_map", details)
 

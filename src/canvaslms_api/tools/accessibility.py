@@ -339,10 +339,13 @@ def _run_checks(html: str) -> list[Issue]:
     return scanner.issues + empty.issues
 
 
-async def _fetch_items(app: App, cid: int, content_types: list[str]) -> list[ContentItem]:
+async def _fetch_items(app: App, cid: int, content_types: list[str]) -> tuple[list[ContentItem], list[str]]:
     items: list[ContentItem] = []
+    capped: list[str] = []
     if "pages" in content_types:
         pages = await app.client.get_all(f"/courses/{cid}/pages")
+        if pages.capped:
+            capped.append(f"pages ({len(pages)})")
         bodies = await app.client.gather(
             [app.client.get(f"/courses/{cid}/pages/{p['url']}") for p in pages]
         )
@@ -351,11 +354,15 @@ async def _fetch_items(app: App, cid: int, content_types: list[str]) -> list[Con
 
     if "assignments" in content_types:
         assignments = await app.client.get_all(f"/courses/{cid}/assignments")
+        if assignments.capped:
+            capped.append(f"assignments ({len(assignments)})")
         for a in assignments:
             items.append(ContentItem("assignment", str(a.get("id")), a.get("name") or "", a.get("description") or ""))
 
     if "discussions" in content_types:
         topics = await app.client.get_all(f"/courses/{cid}/discussion_topics")
+        if topics.capped:
+            capped.append(f"discussions ({len(topics)})")
         for t in topics:
             items.append(ContentItem("discussion", str(t.get("id")), t.get("title") or "", t.get("message") or ""))
 
@@ -363,7 +370,13 @@ async def _fetch_items(app: App, cid: int, content_types: list[str]) -> list[Con
         course = await app.client.get(f"/courses/{cid}", {"include[]": ["syllabus_body"]})
         items.append(ContentItem("syllabus", "syllabus", "Syllabus", course.get("syllabus_body") or ""))
 
-    return items
+    return items, capped
+
+
+def _capped_kinds_notice(capped: list[str]) -> str:
+    if not capped:
+        return ""
+    return "_Capped at 1000 and more exist for: " + ", ".join(capped) + ". Narrow content_types or scan per-content to see the rest._"
 
 
 def _parse_content_types(raw: str) -> list[str]:
@@ -573,7 +586,7 @@ def register(mcp: FastMCP, app: App) -> None:
         """
         types = _parse_content_types(content_types)
         cid = await app.course_id(course)
-        items = await _fetch_items(app, cid, types)
+        items, capped = await _fetch_items(app, cid, types)
 
         severity_counts = {"high": 0, "medium": 0, "low": 0}
         rows = []
@@ -596,7 +609,7 @@ def register(mcp: FastMCP, app: App) -> None:
         )
         table = md.table(["item", "type", "check", "severity", "detail"], rows)
         fixes = md.bullets(f"**{cid_}**: {FIX_GUIDANCE.get(cid_, 'review manually')}" for cid_ in sorted(seen_checks))
-        return md.join(summary, md.section("Issues", table), md.section("How to fix", fixes))
+        return md.join(summary, md.section("Issues", table), md.section("How to fix", fixes), _capped_kinds_notice(capped))
 
     @mcp.tool(annotations=DESTRUCTIVE)
     async def fix_accessibility_issues(
@@ -632,7 +645,7 @@ def register(mcp: FastMCP, app: App) -> None:
             raise ToolError("syllabus cannot be auto-fixed; edit it directly with a page/course tool.")
 
         cid = await app.course_id(course)
-        items = await _fetch_items(app, cid, types)
+        items, capped = await _fetch_items(app, cid, types)
 
         planned = []
         for item in items:
@@ -642,7 +655,7 @@ def register(mcp: FastMCP, app: App) -> None:
 
         if not confirm:
             if not planned:
-                return md.preview("fix_accessibility_issues", "No fixable issues found for the given fix_types/content_types.")
+                return md.preview("fix_accessibility_issues", md.join("No fixable issues found for the given fix_types/content_types.", _capped_kinds_notice(capped)))
             rows = [(item.title or item.identifier, item.kind, len(result.fixes)) for item, result in planned]
             details = [md.table(["item", "type", "edits"], rows)]
             for item, result in planned[:5]:
@@ -653,6 +666,7 @@ def register(mcp: FastMCP, app: App) -> None:
                         level=3,
                     )
                 )
+            details.append(_capped_kinds_notice(capped))
             return md.preview("fix_accessibility_issues", md.join(*details))
 
         outcomes = []
@@ -673,8 +687,8 @@ def register(mcp: FastMCP, app: App) -> None:
                 outcomes.append((item.title or item.identifier, item.kind, "failed", str(exc)))
 
         if not outcomes:
-            return md.done("fix_accessibility_issues", "No fixable issues found for the given fix_types/content_types.")
-        return md.done("fix_accessibility_issues", md.table(["item", "type", "result", "detail"], outcomes))
+            return md.done("fix_accessibility_issues", md.join("No fixable issues found for the given fix_types/content_types.", _capped_kinds_notice(capped)))
+        return md.done("fix_accessibility_issues", md.join(md.table(["item", "type", "result", "detail"], outcomes), _capped_kinds_notice(capped)))
 
     @mcp.tool(annotations=READ)
     async def fetch_ufixit_report(course: str | int, page_title: str | None = None) -> str:
@@ -689,7 +703,8 @@ def register(mcp: FastMCP, app: App) -> None:
         needle = (page_title or "ufixit").casefold()
         match = next((p for p in pages if needle in (p.get("title") or "").casefold()), None)
         if match is None:
-            raise ToolError(f"No page found with title containing {needle!r}.")
+            hint = f" {md.capped_notice(len(pages))}" if pages.capped else ""
+            raise ToolError(f"No page found with title containing {needle!r}.{hint}")
 
         full = await app.client.get(f"/courses/{cid}/pages/{match['url']}")
         body_html = full.get("body") or ""

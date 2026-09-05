@@ -147,9 +147,12 @@ def register(mcp: FastMCP, app: App) -> None:
             )
             for a in assignments
         ]
-        return md.table(
+        table = md.table(
             ["id", "name", "due", "points", "submission types", "status", "url"], rows
         )
+        if assignments.capped:
+            table += f"\n\n{md.capped_notice(len(assignments))}"
+        return table
 
     @mcp.tool(annotations=READ)
     async def get_assignment(course: str | int, assignment_id: str | int) -> str:
@@ -224,6 +227,8 @@ def register(mcp: FastMCP, app: App) -> None:
             f"/courses/{cid}/assignments/{assignment_id}/submissions",
             {"include[]": ["user", "submission_comments"]},
         )
+        capped = submissions.capped
+        total_fetched = len(submissions)
         if status:
             if status == "submitted":
                 submissions = [s for s in submissions if s.get("workflow_state") != "unsubmitted"]
@@ -247,9 +252,12 @@ def register(mcp: FastMCP, app: App) -> None:
             )
             for s in submissions
         ]
-        return md.table(
+        table = md.table(
             ["student", "status", "submitted at", "score", "grade", "late", "missing"], rows
         )
+        if capped:
+            table += f"\n\n{md.capped_notice(total_fetched)}"
+        return table
 
     @mcp.tool(annotations=READ)
     async def get_assignment_analytics(course: str | int, assignment_id: str | int) -> str:
@@ -303,7 +311,8 @@ def register(mcp: FastMCP, app: App) -> None:
             for label, count in buckets.items()
         ]
         distribution = md.table(["range", "count", "% of graded"], dist_rows) if possible else "_assignment has no points possible_"
-        return md.join(summary, md.section("Grade distribution", distribution))
+        notice = md.capped_notice(total) if submissions.capped else ""
+        return md.join(summary, md.section("Grade distribution", distribution), notice)
 
     @mcp.tool(annotations=READ)
     async def get_student_analytics(course: str | int, student_id: str | int | None = None) -> str:
@@ -362,6 +371,7 @@ def register(mcp: FastMCP, app: App) -> None:
                     ]
                 ),
                 md.section("Trend (last 5 graded)", trend_text, level=3),
+                md.capped_notice(len(assignments)) if assignments.capped else "",
             )
 
         total = len(assignments)
@@ -377,6 +387,7 @@ def register(mcp: FastMCP, app: App) -> None:
                 ]
             ),
             "_Pass student_id for per-student analytics._",
+            md.capped_notice(total) if assignments.capped else "",
         )
 
     @mcp.tool(annotations=WRITE)
@@ -569,9 +580,14 @@ def register(mcp: FastMCP, app: App) -> None:
                 body["comment"] = {"text_comment": comment}
             payloads[str(user_id)] = body
         if not confirm:
-            return md.preview(
-                "bulk_grade_submissions", md.table(["student", "user id", "current score", "new grade"], rows)
-            )
+            details = md.table(["student", "user id", "current score", "new grade"], rows)
+            if submissions.capped:
+                details = md.join(
+                    details,
+                    f"{md.capped_notice(len(submissions))} A student outside the first 1000 submissions "
+                    "shows no current score above, but their grade will still be submitted correctly.",
+                )
+            return md.preview("bulk_grade_submissions", details)
         results = await app.client.gather(
             [
                 app.client.put(

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Literal, get_args
+from typing import Any, Literal
 
 from fastmcp import FastMCP
 from fastmcp.exceptions import ToolError
@@ -62,6 +62,8 @@ def register(mcp: FastMCP, app: App) -> None:
             for m in modules
         ]
         table = md.table(["id", "name", "position", "published", "state", "items", "unlock"], rows)
+        if modules.capped:
+            table += f"\n\n{md.capped_notice(len(modules))}"
         if not include_items:
             return table
 
@@ -113,7 +115,10 @@ def register(mcp: FastMCP, app: App) -> None:
                 row += [md.fmt_date(details.get("due_at")), details.get("points_possible")]
             row.append(item.get("html_url") or item.get("external_url") or md.NONE)
             rows.append(row)
-        return md.table(headers, rows)
+        table = md.table(headers, rows)
+        if items.capped:
+            table += f"\n\n{md.capped_notice(len(items))}"
+        return table
 
     @mcp.tool(annotations=WRITE)
     async def create_module(

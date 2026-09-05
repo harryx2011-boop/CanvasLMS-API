@@ -46,6 +46,10 @@ class _PeerReviewData:
     reviews: list[dict[str, Any]]
     submissions_by_id: dict[int, dict[str, Any]]
     reviewees_by_user: dict[int, dict[str, Any]]
+    capped: bool = False
+
+    def notice(self) -> str:
+        return md.capped_notice(len(self.reviews)) if self.capped else ""
 
 
 async def _load(app: App, cid: int, assignment_id: str | int) -> _PeerReviewData:
@@ -65,6 +69,7 @@ async def _load(app: App, cid: int, assignment_id: str | int) -> _PeerReviewData
         reviews=reviews,
         submissions_by_id=submissions_by_id,
         reviewees_by_user=reviewees_by_user,
+        capped=reviews.capped or submissions.capped,
     )
 
 
@@ -289,9 +294,10 @@ def register(mcp: FastMCP, app: App) -> None:
             )
             for r in data.reviews
         ]
-        return md.table(
+        table = md.table(
             ["review id", "reviewer", "reviewee", "state", "comments", "last comment"], rows
         )
+        return md.join(table, data.notice())
 
     @mcp.tool(annotations=WRITE)
     async def assign_peer_review(
@@ -386,7 +392,7 @@ def register(mcp: FastMCP, app: App) -> None:
         total = len(data.reviews)
         table = md.table(headers, rows)
         totals = f"**Total:** {completed} / {total} completed"
-        return md.join(table, totals)
+        return md.join(table, totals, data.notice())
 
     @mcp.tool(annotations=READ)
     async def get_peer_review_completion_analytics(
@@ -418,7 +424,7 @@ def register(mcp: FastMCP, app: App) -> None:
             ]
         )
         if not include_student_details:
-            return summary
+            return md.join(summary, data.notice())
 
         rows = []
         for user_id, c in counts.items():
@@ -428,7 +434,7 @@ def register(mcp: FastMCP, app: App) -> None:
                 (app.person(user, fallback=f"user {user_id}"), c["assigned"], c["completed"], c["assigned"] - c["completed"])
             )
         table = md.table(["student", "assigned", "completed", "pending"], rows)
-        return md.join(summary, md.section("Per-student", table))
+        return md.join(summary, md.section("Per-student", table), data.notice())
 
     @mcp.tool(annotations=READ)
     async def get_peer_review_followup_list(
@@ -463,7 +469,8 @@ def register(mcp: FastMCP, app: App) -> None:
             )
             for r in rows_data
         ]
-        return md.table(["student", "pending reviews", "days since due", "priority"], rows)
+        table = md.table(["student", "pending reviews", "days since due", "priority"], rows)
+        return md.join(table, data.notice())
 
     @mcp.tool(annotations=READ)
     async def get_peer_review_comments(
@@ -501,7 +508,8 @@ def register(mcp: FastMCP, app: App) -> None:
                 rows.append(tuple(row))
         # Every comment column here was written by a student reviewer.
         rendered = md.table(headers, rows)
-        return md.untrusted(rendered, "peer review comments") if rows else rendered
+        rendered = md.untrusted(rendered, "peer review comments") if rows else rendered
+        return md.join(rendered, data.notice())
 
     @mcp.tool(annotations=READ)
     async def analyze_peer_review_quality(
@@ -544,7 +552,7 @@ def register(mcp: FastMCP, app: App) -> None:
             md.kv([("reviews analyzed", len(scores)), ("average score", avg_score)]),
             md.table(["score", "count"], dist_rows),
         )
-        return md.join(table, md.section("Distribution", summary))
+        return md.join(table, md.section("Distribution", summary), data.notice())
 
     @mcp.tool(annotations=READ)
     async def identify_problematic_peer_reviews(course: str | int, assignment_id: str | int) -> str:
@@ -591,8 +599,9 @@ def register(mcp: FastMCP, app: App) -> None:
                 )
             )
         if not rows:
-            return "_no problematic peer reviews found_"
-        return md.table(["review id", "reviewer", "reviewee", "state", "reasons"], rows)
+            return md.join("_no problematic peer reviews found_", data.notice())
+        table = md.table(["review id", "reviewer", "reviewee", "state", "reasons"], rows)
+        return md.join(table, data.notice())
 
     @mcp.tool(annotations=READ)
     async def generate_peer_review_report(
@@ -669,6 +678,7 @@ def register(mcp: FastMCP, app: App) -> None:
             md.section("Quality summary", quality_block),
             md.section("Follow-up list", followup_block),
             md.section("Action items", md.bullets(action_items)),
+            data.notice(),
         )
 
         if not save_to_file:
@@ -721,7 +731,7 @@ def register(mcp: FastMCP, app: App) -> None:
                 total_words = sum(len(t.split()) for t in texts)
                 rows.append((name, len(texts), total_words))
             table = md.table(["reviewee", "feedback items", "total words"], rows)
-            return md.join(header, table)
+            return md.join(header, table, data.notice())
 
         if report_type == "detailed":
             rows = []
@@ -733,7 +743,7 @@ def register(mcp: FastMCP, app: App) -> None:
                 for c in _review_comments(r):
                     rows.append((reviewer, reviewee, md.fmt_date(c.get("created_at")), c.get("comment")))
             table = md.table(["reviewer", "reviewee", "date", "comment"], rows)
-            return md.join(header, table)
+            return md.join(header, table, data.notice())
 
         blocks = [header]
         per_reviewee_reviews: dict[int, list[dict[str, Any]]] = {}
@@ -754,6 +764,7 @@ def register(mcp: FastMCP, app: App) -> None:
                 else "_no feedback received_"
             )
             blocks.append(md.section(name, body, level=3))
+        blocks.append(data.notice())
         return md.join(*blocks)
 
     @mcp.tool(annotations=READ)
@@ -818,18 +829,23 @@ def register(mcp: FastMCP, app: App) -> None:
                 dest.write_text(json.dumps(rows, indent=2), encoding="utf-8")
             return md.done(
                 "extract_peer_review_dataset",
-                md.kv([("path", str(dest)), ("rows", len(rows)), ("format", output_format)]),
+                md.join(
+                    md.kv([("path", str(dest)), ("rows", len(rows)), ("format", output_format)]),
+                    data.notice(),
+                ),
             )
 
-        capped = rows[:200]
-        note = f"\n\n_Showing {len(capped)} of {len(rows)} rows; set save_locally=true for the full dataset._" if len(rows) > 200 else ""
+        capped_rows = rows[:200]
+        note = f"\n\n_Showing {len(capped_rows)} of {len(rows)} rows; set save_locally=true for the full dataset._" if len(rows) > 200 else ""
+        if data.capped:
+            note += f"\n\n{data.notice()}"
         if output_format == "csv":
             buffer = io.StringIO()
-            writer = csv.DictWriter(buffer, fieldnames=list(capped[0].keys()) if capped else [])
+            writer = csv.DictWriter(buffer, fieldnames=list(capped_rows[0].keys()) if capped_rows else [])
             writer.writeheader()
-            writer.writerows(capped)
+            writer.writerows(capped_rows)
             return f"```csv\n{buffer.getvalue()}```{note}"
-        return f"```json\n{json.dumps(capped, indent=2)}\n```{note}"
+        return f"```json\n{json.dumps(capped_rows, indent=2)}\n```{note}"
 
     @mcp.tool(annotations=DESTRUCTIVE)
     async def message_peer_reviewers(
@@ -879,12 +895,13 @@ def register(mcp: FastMCP, app: App) -> None:
         details = md.join(
             md.kv([("subject", subject)]),
             md.table(["recipient", "pending reviews"], preview_rows),
+            data.notice(),
         )
         if not confirm:
             return md.preview("message_peer_reviewers", details)
 
         results = await _send_conversations(app, cid, recipient_ids, subject, bodies)
-        return md.done("message_peer_reviewers", md.table(["user id", "result"], results))
+        return md.done("message_peer_reviewers", md.join(md.table(["user id", "result"], results), data.notice()))
 
     @mcp.tool(annotations=DESTRUCTIVE)
     async def send_peer_review_followups(
@@ -930,11 +947,11 @@ def register(mcp: FastMCP, app: App) -> None:
             )
 
         if not recipient_ids:
-            return "_no students have pending peer reviews; nothing to send_"
+            return md.join("_no students have pending peer reviews; nothing to send_", data.notice())
 
-        details = md.join(md.kv([("subject", subject)]), *batch_blocks)
+        details = md.join(md.kv([("subject", subject)]), *batch_blocks, data.notice())
         if not confirm:
             return md.preview("send_peer_review_followups", details)
 
         results = await _send_conversations(app, cid, recipient_ids, subject, bodies)
-        return md.done("send_peer_review_followups", md.table(["user id", "result"], results))
+        return md.done("send_peer_review_followups", md.join(md.table(["user id", "result"], results), data.notice()))

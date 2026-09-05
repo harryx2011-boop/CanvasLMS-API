@@ -79,6 +79,19 @@ def parse_json(response: httpx.Response) -> Any:
     return json.loads(text)
 
 
+class PageList(list):
+    """A list of items from get_all(), plus whether the page limit cut it off.
+
+    Still a plain list everywhere it's indexed, sliced, sorted, or measured
+    with len() — .capped is the one thing get_all() couldn't otherwise tell
+    a caller, and callers that don't check it lose nothing they had before.
+    """
+
+    def __init__(self, items: Iterable[Any], capped: bool):
+        super().__init__(items)
+        self.capped = capped
+
+
 class CanvasClient:
     def __init__(self, settings: Settings):
         self.settings = settings
@@ -136,7 +149,7 @@ class CanvasClient:
     async def get(self, path: str, params: Params = None) -> Any:
         return parse_json(await self.request("GET", path, params=params))
 
-    async def get_all(self, path: str, params: Params = None, limit: int = 1000) -> list[Any]:
+    async def get_all(self, path: str, params: Params = None, limit: int = 1000) -> PageList:
         merged: dict[str, Any] = {"per_page": 100}
         merged.update(params or {})
         items: list[Any] = []
@@ -144,11 +157,13 @@ class CanvasClient:
         while True:
             page = parse_json(response)
             if not isinstance(page, list):
-                return [page] if page is not None else []
+                return PageList([page] if page is not None else [], capped=False)
             items.extend(page)
             next_url = response.links.get("next", {}).get("url")
-            if not next_url or len(items) >= limit:
-                return items[:limit]
+            if not next_url:
+                return PageList(items, capped=False)
+            if len(items) >= limit:
+                return PageList(items[:limit], capped=True)
             response = await self.request("GET", next_url)
 
     async def post(

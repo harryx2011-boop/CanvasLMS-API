@@ -60,7 +60,10 @@ def register(mcp: FastMCP, app: App) -> None:
                 )
             )
         rows.sort(key=lambda row: row[0])
-        return md.table(["due", "course", "type", "title", "points", "status"], rows)
+        table = md.table(["due", "course", "type", "title", "points", "status"], rows)
+        if items.capped:
+            table += f"\n\n{md.capped_notice(len(items))}"
+        return table
 
     @mcp.tool(annotations=READ)
     async def get_todo() -> str:
@@ -79,7 +82,10 @@ def register(mcp: FastMCP, app: App) -> None:
                     item.get("html_url"),
                 )
             )
-        return md.table(["type", "course", "title", "due", "points", "url"], rows)
+        table = md.table(["type", "course", "title", "due", "points", "url"], rows)
+        if items.capped:
+            table += f"\n\n{md.capped_notice(len(items))}"
+        return table
 
     @mcp.tool(annotations=READ)
     async def get_submission_status(course: str | int | None = None) -> str:
@@ -96,6 +102,8 @@ def register(mcp: FastMCP, app: App) -> None:
 
         missing_params = {"include[]": ["course"], "filter[]": ["submittable"]}
         missing = await app.client.get_all("/users/self/missing_submissions", missing_params)
+        missing_capped = missing.capped
+        missing_total = len(missing)
         if course is not None:
             cid = await app.course_id(course)
             missing = [m for m in missing if m.get("course_id") == cid]
@@ -107,7 +115,10 @@ def register(mcp: FastMCP, app: App) -> None:
             )
             for m in missing
         ]
-        blocks.append(md.section("Missing work", md.table(["course", "assignment", "due"], missing_rows)))
+        missing_table = md.table(["course", "assignment", "due"], missing_rows)
+        if missing_capped:
+            missing_table += f"\n\n{md.capped_notice(missing_total)}"
+        blocks.append(md.section("Missing work", missing_table))
 
         if course is not None:
             courses = [{"id": await app.course_id(course)}]
@@ -122,7 +133,9 @@ def register(mcp: FastMCP, app: App) -> None:
 
         results = await app.client.gather(fetch(c["id"]) for c in courses)
         rows = []
+        any_capped = False
         for c, assignments in zip(courses, results, strict=True):
+            any_capped = any_capped or assignments.capped
             course_name = await app.course_name(c["id"])
             for assignment in assignments:
                 submission = assignment.get("submission")
@@ -138,9 +151,10 @@ def register(mcp: FastMCP, app: App) -> None:
                         ),
                     )
                 )
-        blocks.append(
-            md.section("All assignments", md.table(["course", "assignment", "due", "status", "score"], rows))
-        )
+        all_table = md.table(["course", "assignment", "due", "status", "score"], rows)
+        if any_capped:
+            all_table += f"\n\n{md.capped_notice(len(rows))}"
+        blocks.append(md.section("All assignments", all_table))
         return md.join(*blocks)
 
     @mcp.tool(annotations=READ)
@@ -167,7 +181,10 @@ def register(mcp: FastMCP, app: App) -> None:
                         enrollment.get("computed_final_score"),
                     )
                 )
-            return md.table(["course", "current score", "current grade", "final score"], rows)
+            table = md.table(["course", "current score", "current grade", "final score"], rows)
+            if courses.capped:
+                table += f"\n\n{md.capped_notice(len(courses))}"
+            return table
 
         cid = await app.course_id(course)
         details = await app.client.get(f"/courses/{cid}", {"include[]": ["total_scores"]})
@@ -195,10 +212,13 @@ def register(mcp: FastMCP, app: App) -> None:
                 ("final score", enrollment.get("computed_final_score")),
             ]
         )
+        graded_table = md.table(["assignment", "due", "score", "grade"], rows)
+        if assignments.capped:
+            graded_table += f"\n\n{md.capped_notice(len(assignments))}"
         return md.join(
             md.heading(details.get("name") or str(cid)),
             totals,
-            md.section("Graded assignments", md.table(["assignment", "due", "score", "grade"], rows)),
+            md.section("Graded assignments", graded_table),
         )
 
     @mcp.tool(annotations=READ)
@@ -225,6 +245,7 @@ def register(mcp: FastMCP, app: App) -> None:
             courses = [c["id"] for c in await app.courses.active()]
 
         rows = []
+        capped = False
         for cid in courses:
             course_name = await app.course_name(cid)
             if assignment_id is not None:
@@ -233,6 +254,7 @@ def register(mcp: FastMCP, app: App) -> None:
                 assignments = await app.client.get_all(
                     f"/courses/{cid}/assignments", {"include[]": ["submission"]}
                 )
+                capped = capped or assignments.capped
             for assignment in assignments:
                 if not assignment.get("peer_reviews"):
                     continue
@@ -241,6 +263,7 @@ def register(mcp: FastMCP, app: App) -> None:
                         f"/courses/{cid}/assignments/{assignment['id']}/peer_reviews",
                         {"include[]": ["user", "submission_comments"]},
                     )
+                    capped = capped or reviews.capped
                 except CanvasError:
                     continue
                 for review in reviews:
@@ -257,9 +280,10 @@ def register(mcp: FastMCP, app: App) -> None:
                         )
                     )
 
+        notice = md.capped_notice(len(rows)) if capped else ""
         if not rows:
-            return "No pending peer reviews."
-        return md.table(["course", "assignment", "reviewee", "status"], rows)
+            return md.join("No pending peer reviews.", notice)
+        return md.join(md.table(["course", "assignment", "reviewee", "status"], rows), notice)
 
     @mcp.tool(annotations=READ)
     async def get_submission(course: str | int, assignment_id: str | int) -> str:

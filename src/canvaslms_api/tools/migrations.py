@@ -12,7 +12,7 @@ from ..client import CanvasError
 DATE_FIELDS = ("old_start_date", "old_end_date", "new_start_date", "new_end_date")
 
 
-async def _occupancy(app: App, cid: int) -> dict[str, int]:
+async def _occupancy(app: App, cid: int) -> tuple[dict[str, int], bool]:
     counts = await app.client.gather(
         [
             app.client.get_all(f"/courses/{cid}/modules"),
@@ -22,13 +22,14 @@ async def _occupancy(app: App, cid: int) -> dict[str, int]:
             app.client.get_all(f"/courses/{cid}/files"),
         ]
     )
-    return {
+    occupancy = {
         "modules": len(counts[0]),
         "assignments": len(counts[1]),
         "pages": len(counts[2]),
         "discussions": len(counts[3]),
         "files": len(counts[4]),
     }
+    return occupancy, any(c.capped for c in counts)
 
 
 def register(mcp: FastMCP, app: App) -> None:
@@ -62,14 +63,18 @@ def register(mcp: FastMCP, app: App) -> None:
         if target_id == source_id:
             raise ToolError("target_course and source_course resolve to the same course.")
 
-        target_name, source_name, occupancy = await app.client.gather(
+        target_name, source_name, (occupancy, occupancy_capped) = await app.client.gather(
             [app.course_name(target_id), app.course_name(source_id), _occupancy(app, target_id)]
         )
 
         details_pairs: list[tuple[str, Any]] = [
             ("source", f"{source_name} (id {source_id})"),
             ("target", f"{target_name} (id {target_id})"),
-            ("target already has", ", ".join(f"{k}: {v}" for k, v in occupancy.items())),
+            (
+                "target already has",
+                ", ".join(f"{k}: {v}" for k, v in occupancy.items())
+                + (" (one or more counts capped at 1000; actual totals may be higher)" if occupancy_capped else ""),
+            ),
         ]
         if any(dates):
             details_pairs.append(
@@ -152,4 +157,7 @@ def register(mcp: FastMCP, app: App) -> None:
             (issue.get("issue_type"), issue.get("description"), issue.get("fix_issue_html_url") or md.NONE)
             for issue in issues
         ]
-        return md.join(summary, md.section("Migration issues", md.table(["type", "description", "fix url"], rows)))
+        table = md.table(["type", "description", "fix url"], rows)
+        if issues.capped:
+            table += f"\n\n{md.capped_notice(len(issues))}"
+        return md.join(summary, md.section("Migration issues", table))

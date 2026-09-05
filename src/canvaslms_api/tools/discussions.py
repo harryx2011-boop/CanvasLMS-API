@@ -38,10 +38,12 @@ def register(mcp: FastMCP, app: App) -> None:
         """
         cid = await app.course_id(course)
         topics = await app.client.get_all(f"/courses/{cid}/discussion_topics")
+        capped = topics.capped
         if include_announcements:
             announcements = await app.client.get_all(
                 f"/courses/{cid}/discussion_topics", {"only_announcements": True}
             )
+            capped = capped or announcements.capped
             seen = {t.get("id") for t in topics}
             topics.extend(a for a in announcements if a.get("id") not in seen)
         rows = [
@@ -58,9 +60,12 @@ def register(mcp: FastMCP, app: App) -> None:
             )
             for t in topics
         ]
-        return md.table(
+        table = md.table(
             ["id", "title", "type", "posted", "replies", "unread", "graded", "flags", "url"], rows
         )
+        if capped:
+            table += f"\n\n{md.capped_notice(len(topics))}"
+        return table
 
     @mcp.tool(annotations=READ)
     async def get_discussion_topic(course: str | int, topic_id: str | int) -> str:
@@ -122,7 +127,10 @@ def register(mcp: FastMCP, app: App) -> None:
             )
             for e in entries
         ]
-        return md.table(["id", "author", "posted", "replies", "preview"], rows)
+        table = md.table(["id", "author", "posted", "replies", "preview"], rows)
+        if entries.capped:
+            table += f"\n\n{md.capped_notice(len(entries))}"
+        return table
 
     @mcp.tool(annotations=READ)
     async def get_discussion_entry(
@@ -140,7 +148,8 @@ def register(mcp: FastMCP, app: App) -> None:
         entries = await app.client.get_all(f"/courses/{cid}/discussion_topics/{topic_id}/entries")
         entry = next((e for e in entries if str(e.get("id")) == str(entry_id)), None)
         if entry is None:
-            raise ToolError(f"No entry {entry_id} found in topic {topic_id}.")
+            hint = f" {md.capped_notice(len(entries))}" if entries.capped else ""
+            raise ToolError(f"No entry {entry_id} found in topic {topic_id}.{hint}")
         body = md.kv(
             [
                 ("id", entry.get("id")),
@@ -172,6 +181,8 @@ def register(mcp: FastMCP, app: App) -> None:
                 )
             else:
                 blocks.append(md.section("Replies", "_none_"))
+            if replies.capped:
+                blocks.append(md.capped_notice(len(replies)))
         return md.join(*blocks)
 
     @mcp.tool(annotations=READ)
@@ -194,6 +205,13 @@ def register(mcp: FastMCP, app: App) -> None:
             md.heading(topic.get("title") or f"Topic {topic_id}", 2),
             md.html_to_text(topic.get("message"), 2000) or "_no message_",
         ]
+
+        def count_all(entries: list[dict[str, Any]]) -> int:
+            total = len(entries)
+            if include_replies:
+                for entry in entries:
+                    total += count_all(entry.get("replies") or [])
+            return total
 
         count = 0
         truncated = False
@@ -218,7 +236,9 @@ def register(mcp: FastMCP, app: App) -> None:
                 if truncated:
                     return
 
-        walk(view.get("view") or [], 0)
+        tree = view.get("view") or []
+        total_entries = count_all(tree)
+        walk(tree, 0)
         blocks.append(
             md.section(
                 "Conversation",
@@ -226,7 +246,7 @@ def register(mcp: FastMCP, app: App) -> None:
             )
         )
         if truncated:
-            blocks.append("_Truncated at 300 entries._")
+            blocks.append(f"_Showing 300 of {total_entries} entries; the list was truncated. Narrow the query to see the rest._")
         return md.join(*blocks)
 
     @mcp.tool(annotations=WRITE)
@@ -278,6 +298,8 @@ def register(mcp: FastMCP, app: App) -> None:
                 ("your reply", message),
             ]
         )
+        if parent is None and entries.capped:
+            details = md.join(details, md.capped_notice(len(entries)))
         if not confirm:
             return md.preview("reply_to_discussion_entry", details)
         created = await app.client.post(
@@ -452,6 +474,8 @@ def register(mcp: FastMCP, app: App) -> None:
             for a in announcements
         ]
         table = md.table(["course", "id", "title", "posted", "author", "preview"], rows)
+        if announcements.capped:
+            table += f"\n\n{md.capped_notice(len(announcements))}"
 
         recent_blocks = []
         for a in announcements[:5]:
@@ -627,12 +651,16 @@ def register(mcp: FastMCP, app: App) -> None:
             return True
 
         matched = [a for a in announcements if matches(a)][:limit]
+        cap_notice = md.capped_notice(len(announcements)) if announcements.capped else ""
         if not matched:
-            return "_no announcements matched the given criteria_"
+            return md.join("_no announcements matched the given criteria_", cap_notice)
 
         if not confirm:
             rows = [(a.get("id"), a.get("title"), md.fmt_date(a.get("posted_at"))) for a in matched]
-            return md.preview("delete_announcements_matching", md.table(["id", "title", "posted"], rows))
+            return md.join(
+                md.preview("delete_announcements_matching", md.table(["id", "title", "posted"], rows)),
+                cap_notice,
+            )
 
         results = []
         for a in matched:

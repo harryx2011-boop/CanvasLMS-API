@@ -160,6 +160,11 @@ def join(*blocks: str) -> str:
     return "\n\n".join(block for block in blocks if block)
 
 
+def capped_notice(shown: int, limit: int = 1000) -> str:
+    """Notice for a get_all() list that hit its page cap; more items exist."""
+    return f"_Showing {shown} items; the list was capped at {limit} and more exist. Narrow the query to see the rest._"
+
+
 def preview(action: str, details: str) -> str:
     return join(
         heading(f"Preview: {action}"),

@@ -95,7 +95,10 @@ def register(mcp: FastMCP, app: App) -> None:
             )
             for f in files
         ]
-        return md.table(["id", "name", "type", "size", "updated", "locked", "folder"], rows)
+        table = md.table(["id", "name", "type", "size", "updated", "locked", "folder"], rows)
+        if files.capped:
+            table += f"\n\n{md.capped_notice(len(files))}"
+        return table
 
     @mcp.tool(annotations=READ)
     async def read_file(course: str | int, file_id: str | int, max_size_mb: float = 5) -> str:

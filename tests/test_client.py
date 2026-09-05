@@ -58,6 +58,7 @@ async def test_get_all_follows_pagination_across_pages(
 
     result = await client.get_all("/courses")
     assert [c["id"] for c in result] == [1, 2, 3, 4, 5]
+    assert result.capped is False
     await client.aclose()
 
 
@@ -69,6 +70,22 @@ async def test_get_all_respects_limit(client: CanvasClient, mock: respx.MockRout
     )
     result = await client.get_all("/courses", limit=2)
     assert [c["id"] for c in result] == [1, 2]
+    assert result.capped is True
+    await client.aclose()
+
+
+async def test_get_all_reports_uncapped_when_last_page_has_no_next_link(
+    client: CanvasClient, mock: respx.MockRouter
+) -> None:
+    # A page count that lands exactly on `limit` but has no further `next`
+    # link must not be reported as capped — capped means "more exist", not
+    # "the count happens to match the limit".
+    mock.get("https://canvas.test/api/v1/courses", params={"per_page": "100"}).respond(
+        json=[{"id": 1}, {"id": 2}]
+    )
+    result = await client.get_all("/courses", limit=2)
+    assert [c["id"] for c in result] == [1, 2]
+    assert result.capped is False
     await client.aclose()
 
 

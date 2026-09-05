@@ -79,8 +79,9 @@ def register(mcp: FastMCP, app: App) -> None:
             for r in rubrics
         ]
         table = md.table(["id", "title", "points possible", "criteria count"], rows)
+        notice = md.capped_notice(len(rubrics)) if rubrics.capped else ""
         if not include_criteria:
-            return table
+            return md.join(table, notice)
         blocks = [table]
         for r in rubrics:
             criteria = r.get("data") or []
@@ -88,6 +89,7 @@ def register(mcp: FastMCP, app: App) -> None:
                 f"{c.get('description')} ({c.get('points')} pts)" for c in criteria
             ]
             blocks.append(md.section(r.get("title") or f"Rubric {r.get('id')}", md.bullets(lines), level=3))
+        blocks.append(notice)
         return md.join(*blocks)
 
     @mcp.tool(annotations=READ)

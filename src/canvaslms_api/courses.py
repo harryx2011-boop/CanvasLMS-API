@@ -4,7 +4,7 @@ import asyncio
 import time
 from typing import Any
 
-from .client import CanvasClient, CanvasError
+from .client import CanvasClient, CanvasError, PageList
 
 ACTIVE_PARAMS: dict[str, Any] = {
     "enrollment_state": "active",
@@ -16,7 +16,7 @@ class CourseResolver:
     def __init__(self, client: CanvasClient, ttl: int):
         self._client = client
         self._ttl = ttl
-        self._courses: list[dict[str, Any]] | None = None
+        self._courses: PageList | None = None
         self._loaded_at = 0.0
         self._lock = asyncio.Lock()
 
@@ -37,15 +37,15 @@ class CourseResolver:
         self._courses = None
         self._loaded_at = 0.0
 
-    async def active(self, force: bool = False) -> list[dict[str, Any]]:
+    async def active(self, force: bool = False) -> PageList:
         if force or self.stale:
             async with self._lock:
                 if force or self.stale:
                     self._courses = await self._client.get_all("/courses", ACTIVE_PARAMS)
                     self._loaded_at = time.monotonic()
-        return list(self._courses or [])
+        return PageList(self._courses or [], capped=bool(self._courses and self._courses.capped))
 
-    async def all(self) -> list[dict[str, Any]]:
+    async def all(self) -> PageList:
         return await self._client.get_all(
             "/courses",
             {"include[]": ["term", "total_scores"], "state[]": ["available", "completed"]},
