@@ -19,6 +19,7 @@ class CourseResolver:
         self._courses: PageList | None = None
         self._loaded_at = 0.0
         self._lock = asyncio.Lock()
+        self._last_invalidated_by: str | None = None
 
     @property
     def stale(self) -> bool:
@@ -31,11 +32,14 @@ class CourseResolver:
             "age_seconds": age,
             "ttl_seconds": self._ttl,
             "stale": self.stale,
+            "last_invalidated_by": self._last_invalidated_by,
         }
 
-    def clear(self) -> None:
+    def clear(self, invalidated_by: str | None = None) -> None:
         self._courses = None
         self._loaded_at = 0.0
+        if invalidated_by is not None:
+            self._last_invalidated_by = invalidated_by
 
     async def active(self, force: bool = False) -> PageList:
         if force or self.stale:

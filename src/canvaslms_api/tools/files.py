@@ -179,7 +179,8 @@ def register(mcp: FastMCP, app: App) -> None:
             dest = target_dir / f"{stem} ({counter}){suffix}"
             counter += 1
 
-        response = await app.client.download(info["url"])
+        # Course files can run into the hundreds of MB; the shared 30s default is for API calls, not transfers.
+        response = await app.client.download(info["url"], timeout=180.0)
         dest.write_bytes(response.content)
         return md.kv(
             [

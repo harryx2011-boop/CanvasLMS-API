@@ -590,8 +590,12 @@ def register(mcp: FastMCP, app: App) -> None:
             return md.preview("bulk_grade_submissions", details)
         results = await app.client.gather(
             [
+                # Graded in one concurrent batch behind the semaphore; a full roster can queue
+                # behind the concurrency cap longer than the 30s default.
                 app.client.put(
-                    f"/courses/{cid}/assignments/{assignment_id}/submissions/{user_id}", json=body
+                    f"/courses/{cid}/assignments/{assignment_id}/submissions/{user_id}",
+                    json=body,
+                    timeout=90.0,
                 )
                 for user_id, body in payloads.items()
             ]

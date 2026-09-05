@@ -104,7 +104,11 @@ def register(mcp: FastMCP, app: App) -> None:
                 "new_end_date": new_end_date,
             }
 
-        created = await app.client.post(f"/courses/{target_id}/content_migrations", json=payload)
+        # Canvas can take minutes to validate and queue a course copy before responding.
+        created = await app.client.post(
+            f"/courses/{target_id}/content_migrations", json=payload, timeout=120.0
+        )
+        app.courses.clear("create_content_migration")
         return md.done(
             "create_content_migration",
             md.kv(

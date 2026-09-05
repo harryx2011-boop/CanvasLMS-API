@@ -209,5 +209,5 @@ def register(mcp: FastMCP, app: App) -> None:
         This only touches local in-memory state and never calls Canvas, so it
         runs immediately with no confirm step.
         """
-        app.courses.clear()
+        app.courses.clear("clear_cache")
         return md.done("clear_cache", "Course cache cleared.")

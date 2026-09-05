@@ -305,7 +305,11 @@ def register(mcp: FastMCP, app: App) -> None:
             return md.preview("bulk_update_pages", details)
 
         async def apply(p: str) -> Any:
-            return await app.client.put(f"/courses/{cid}/pages/{p}", json={"wiki_page": fields})
+            # Up to 50 pages updated concurrently behind the semaphore; give the batch
+            # more room than a single-page request's 30s default.
+            return await app.client.put(
+                f"/courses/{cid}/pages/{p}", json={"wiki_page": fields}, timeout=90.0
+            )
 
         outcomes = await asyncio.gather(*(apply(p) for p in pages), return_exceptions=True)
         rows = []

@@ -175,6 +175,96 @@ async def test_429_retried_twice_then_succeeds(
     await client.aclose()
 
 
+async def test_503_retries_and_sleeps_retry_after_then_succeeds(
+    client: CanvasClient, mock: respx.MockRouter, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    sleeps: list[float] = []
+
+    async def capture_sleep(delay: float) -> None:
+        sleeps.append(delay)
+
+    monkeypatch.setattr("canvaslms_api.client.asyncio.sleep", capture_sleep)
+
+    route = mock.get("https://canvas.test/api/v1/courses/1")
+    route.side_effect = [
+        httpx.Response(503, headers={"Retry-After": "7"}),
+        httpx.Response(200, json={"id": 1}),
+    ]
+    result = await client.get("/courses/1")
+    assert result == {"id": 1}
+    assert route.call_count == 2
+    assert sleeps == [7.0]
+    await client.aclose()
+
+
+async def test_post_503_is_not_retried(client: CanvasClient, mock: respx.MockRouter) -> None:
+    route = mock.post("https://canvas.test/api/v1/courses/1/assignments").respond(503, text="boom")
+    with pytest.raises(CanvasError) as exc_info:
+        await client.post("/courses/1/assignments", json={"name": "HW1"})
+    assert exc_info.value.status == 503
+    assert route.call_count == 1
+    await client.aclose()
+
+
+async def test_post_connect_error_is_not_retried(
+    client: CanvasClient, mock: respx.MockRouter
+) -> None:
+    route = mock.post("https://canvas.test/api/v1/courses/1/assignments")
+    route.side_effect = httpx.ConnectError("refused")
+    with pytest.raises(CanvasError) as exc_info:
+        await client.post("/courses/1/assignments", json={"name": "HW1"})
+    assert exc_info.value.status == 0
+    assert route.call_count == 1
+    await client.aclose()
+
+
+async def test_retry_after_beyond_cap_is_clamped(
+    client: CanvasClient, mock: respx.MockRouter, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    sleeps: list[float] = []
+
+    async def capture_sleep(delay: float) -> None:
+        sleeps.append(delay)
+
+    monkeypatch.setattr("canvaslms_api.client.asyncio.sleep", capture_sleep)
+
+    route = mock.get("https://canvas.test/api/v1/courses/1")
+    route.side_effect = [
+        httpx.Response(503, headers={"Retry-After": "600"}),
+        httpx.Response(200, json={"id": 1}),
+    ]
+    result = await client.get("/courses/1")
+    assert result == {"id": 1}
+    assert route.call_count == 2
+    assert sleeps == [30.0]
+    await client.aclose()
+
+
+async def test_get_400_is_not_retried(client: CanvasClient, mock: respx.MockRouter) -> None:
+    route = mock.get("https://canvas.test/api/v1/courses/1").respond(400, json={"message": "bad"})
+    with pytest.raises(CanvasError) as exc_info:
+        await client.get("/courses/1")
+    assert exc_info.value.status == 400
+    assert route.call_count == 1
+    await client.aclose()
+
+
+async def test_connect_error_then_success_retries(
+    client: CanvasClient, mock: respx.MockRouter, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    async def no_sleep(*_args, **_kwargs) -> None:
+        return None
+
+    monkeypatch.setattr("canvaslms_api.client.asyncio.sleep", no_sleep)
+
+    route = mock.get("https://canvas.test/api/v1/courses/1")
+    route.side_effect = [httpx.ConnectError("refused"), httpx.Response(200, json={"id": 1})]
+    result = await client.get("/courses/1")
+    assert result == {"id": 1}
+    assert route.call_count == 2
+    await client.aclose()
+
+
 async def test_404_domain_not_found_host_hint(client: CanvasClient, mock: respx.MockRouter) -> None:
     mock.get("https://canvas.test/api/v1/courses/1").respond(
         404, json={"message": "The specified domain not found"}
@@ -301,6 +391,39 @@ async def test_download_follows_redirect_without_auth_header(
     assert response.content == b"file-bytes"
     second_request = second.calls.last.request
     assert "authorization" not in {k.lower() for k in second_request.headers.keys()}
+    await client.aclose()
+
+
+async def test_timeout_override_sent_then_default_call_uses_settings_timeout(
+    client: CanvasClient, mock: respx.MockRouter, settings: Settings
+) -> None:
+    route = mock.post("https://canvas.test/api/v1/courses/1/content_migrations").respond(
+        json={"id": 1}
+    )
+    await client.post("/courses/1/content_migrations", json={}, timeout=120.0)
+    overridden = route.calls.last.request.extensions["timeout"]
+    assert overridden == {"connect": 120.0, "read": 120.0, "write": 120.0, "pool": 120.0}
+
+    route2 = mock.get("https://canvas.test/api/v1/courses/1").respond(json={"id": 1})
+    await client.get("/courses/1")
+    default = route2.calls.last.request.extensions["timeout"]
+    assert default == {
+        "connect": settings.timeout,
+        "read": settings.timeout,
+        "write": settings.timeout,
+        "pool": settings.timeout,
+    }
+    await client.aclose()
+
+
+async def test_download_timeout_override_applies_to_initial_get(
+    client: CanvasClient, mock: respx.MockRouter
+) -> None:
+    route = mock.get("https://canvas.test/files/1/download").respond(200, content=b"file-bytes")
+    response = await client.download("https://canvas.test/files/1/download", timeout=180.0)
+    assert response.content == b"file-bytes"
+    overridden = route.calls.last.request.extensions["timeout"]
+    assert overridden == {"connect": 180.0, "read": 180.0, "write": 180.0, "pool": 180.0}
     await client.aclose()
 
 

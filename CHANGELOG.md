@@ -4,6 +4,15 @@ All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.2] - 2026-09-05
+
+### Changed
+
+- GET/HEAD requests now retry transient failures (502/503/504, and connection-level errors like timeouts and resets) with jittered exponential backoff, in addition to the existing 429 handling. POST/PUT/DELETE are never retried, on either a retryable status or a retryable exception, since a write may have partially succeeded.
+- A 429 or 503 response's `Retry-After` header is honored when present, capped at 30 seconds so a large server-requested wait can't stall a call past what its own per-tool timeout budget can tolerate; otherwise falls back to the jittered backoff.
+- Writes that change course content (`create_content_migration`, `clear_cache`) now invalidate the in-memory course-resolution cache, and `get_cache_status` reports which tool last invalidated it. Previews and failed writes leave the cache untouched.
+- Slow-running tools (`bulk_grade_submissions`, `bulk_update_pages`, `create_content_migration`, file downloads) now pass a longer per-call timeout instead of sharing the 30s default meant for ordinary API calls.
+
 ## [1.0.1] - 2026-09-05
 
 ### Fixed

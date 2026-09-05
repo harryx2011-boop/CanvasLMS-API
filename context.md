@@ -1,5 +1,7 @@
 # CanvasLMS - API: context
 
+> v1.0.2 (2026-09-05): GET-only retry with jittered backoff and capped `Retry-After`, write-triggered course-cache invalidation, per-call timeout override
+>
 > v1.0.1 (2026-09-05): `get_all()` discloses page-cap truncation instead of silently dropping items past the 1000-item limit
 >
 > v1.0.0 (2026-09-02): semver rebaseline; earlier version history folds into it
